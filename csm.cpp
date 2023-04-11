@@ -12,10 +12,12 @@
 #define HOURS_IN_DAY 24
 #define DIRECTORY_DELIM "/"
 #define CSV_DELIM ','
+#define MEMBER_ID_DELIM '$'
 #define EXPERTISE_SIZE 4
 #define EXPERTISE_COLUMN_SIZE 6
 #define EMPLOYEE_COLUMN_SIZE 4
 #define TEAM_COLUMN_SIZE 5
+#define SKIPPED_LINE_CNT 1
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
@@ -56,6 +58,7 @@ class Employee{
     public:
         Employee(int id, string name, int age, Expertise* expertise);
         bool isIdLessThan(Employee b);
+        int getId();
     private:
         int id;
         string name;
@@ -75,6 +78,10 @@ bool Employee::isIdLessThan(Employee b){
     return (this -> id) < b.id;
 }
 
+int Employee::getId(){
+    return id;
+}
+
 bool employeeCmpById(Employee* a, Employee* b){
     return a -> isIdLessThan(*b);
 }
@@ -89,7 +96,6 @@ class Team{
         int bonusMinWorkingHours;
         double bonusWorkingHoursMaxVariance;
 };
-
 
 Team::Team(int id, Employee* head, vector<Employee*> members, int bonusMinWorkingHours, double bonusWorkingHoursMaxVariance){
     this -> id = id;
@@ -116,13 +122,27 @@ int getExpertiseToken(string tokenStr){
     return token;
 }
 
+vector<string> splitString(string str, char delim){
+     vector<string> elements;
+     istringstream strStream(str);
+     string element;
+
+     while(getline(strStream, element, delim)){
+         elements.push_back(element);
+     }
+
+     return elements;
+}
+
 class PedarSahab{
     public:
         PedarSahab();
         Expertise *getExpertiseByInd(int ind);
+        Employee* findEmployeeById(string idStr);
         void sortEmployeesList();
         void addEmployee(string id, string name, string age, string expertise);
         void updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage);
+        void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
     private:
         vector<Employee*> employees;
         vector<Team*> teams;
@@ -141,21 +161,42 @@ void PedarSahab::sortEmployeesList(){
 
 void PedarSahab::addEmployee(string id, string name, string age, string expertise){
     employees.push_back(new Employee(stoi(id), name, stoi(age), getExpertiseByInd(getExpertiseToken(expertise))));
-    this -> sortEmployeesList();
 }
 
 void PedarSahab::updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage){
     expertise[getExpertiseToken(level)] = Expertise((LEVEL)getExpertiseToken(level), stoi(baseSalary), stoi(salaryPerHour), stoi(salaryPerExtraHour), stoi(officialWorkingHours), stoi(taxPercentage));
 }
 
-vector<string> splitString(string str, char delim){
-     vector<string> elements;
-     istringstream strStream(str);
-     string element;
-     while(getline(strStream, element, delim)){
-         elements.push_back(element);
-     }
-     return elements;
+Employee* PedarSahab::findEmployeeById(string idStr){
+    int id = stoi(idStr);
+    int l, r, mid;
+    l = 0;
+    r = (int)employees.size();
+    while(r - l > 1){
+        mid = (l + r) / 2;
+        if(employees[mid] -> getId() <= id){
+            l = mid;
+        }
+        else{
+            r = mid;
+        }
+    }
+    if(employees[l] -> getId() == id){
+        return employees[l];
+    }
+    //exception handling
+    return NULL;
+}
+
+void PedarSahab::addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance){
+    int id = stoi(teamId);
+    Employee* head = findEmployeeById(teamHeadId);
+    vector<Employee*> members;
+    vector<string> memberIdList = splitString(memberIds, MEMBER_ID_DELIM);
+    for(int i = 0; i < (int)memberIdList.size(); i++){
+        members.push_back(findEmployeeById(memberIdList[i]));
+    }
+    teams.push_back(new Team(id, head, members, stoi(bonusMinWorkingHours), stof(bonusWorkingHoursMaxVariance)));
 }
 
 vector<vector<string>> readCSV(string fileName){
@@ -172,7 +213,7 @@ vector<vector<string>> readCSV(string fileName){
 }
 
 void readEmployees(vector<vector<string>> employeeReadFile, PedarSahab &pedarSahab){
-    for(int i = 0; i < (int)employeeReadFile.size(); i++){
+    for(int i = SKIPPED_LINE_CNT; i < (int)employeeReadFile.size(); i++){
         string id;
         string name;
         string age;
@@ -196,7 +237,7 @@ void readEmployees(vector<vector<string>> employeeReadFile, PedarSahab &pedarSah
 }
 
 void readExpertise(vector<vector<string>> salaryConfigsReadFile, PedarSahab &pedarSahab){
-    for(int i = 0; i < (int)salaryConfigsReadFile.size(); i++){
+    for(int i = SKIPPED_LINE_CNT; i < (int)salaryConfigsReadFile.size(); i++){
         string level;
         string baseSalary;
         string salaryPerHour;
@@ -228,7 +269,31 @@ void readExpertise(vector<vector<string>> salaryConfigsReadFile, PedarSahab &ped
 }
 
 void readTeams(vector<vector<string>> teamsReadFile, PedarSahab &pedarSahab){
-
+    for(int i = SKIPPED_LINE_CNT; i < (int)teamsReadFile.size(); i++){
+        string id;
+        string headId;
+        string memberIds;
+        string bonusMinWorkingHours;
+        string BonusWorkingHoursMaxVariance;
+        for(int j = 0; j < TEAM_COLUMN_SIZE; j++){
+            if(j == TEAM_ID){
+                id = teamsReadFile[i][j];
+            }
+            if(j == TEAM_HEAD_ID){
+                headId = teamsReadFile[i][j];
+            }
+            if(j == TEAM_MEMBER_IDS){
+                memberIds = teamsReadFile[i][j];
+            }
+            if(j == TEAM_BONUS_MIN_WORKING_HOURS){
+                bonusMinWorkingHours = teamsReadFile[i][j];
+            }
+            if(j == TEAM_BONUS_WORKING_HOURS_MAX_VARIANCE){
+                BonusWorkingHoursMaxVariance = teamsReadFile[i][j];
+            }
+        }
+        pedarSahab.addTeam(id, headId, memberIds, bonusMinWorkingHours, BonusWorkingHoursMaxVariance);
+    }
 }
 
 PedarSahab readInput(string assetsFolder){
@@ -237,13 +302,13 @@ PedarSahab readInput(string assetsFolder){
     for(int i = 0; i < FILE_SIZE; i++){
         if(i == EMPLOYEE_FILE){
             readEmployees(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
+            pedarSahab.sortEmployeesList();
         }
         if(i == SALARY_CONFIG_FILE){
             readExpertise(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
         if (i == TEAMS_FILE){
-            vector<vector<string>> teamsFile = readCSV(assetsFolder + FILE_NAMES[i]);
-            //handling
+            readTeams(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
         if (i == WORKING_HOURS_FILE){
             vector<vector<string>> workingHoursFile = readCSV(assetsFolder + FILE_NAMES[i]);
@@ -254,6 +319,8 @@ PedarSahab readInput(string assetsFolder){
 }
 
 int main(int argc, char *argv[]) {
-    readInput((string)*argv + DIRECTORY_DELIM);
+    if(argc == 2){
+        readInput((string)*argv + DIRECTORY_DELIM);
+    }
     return 0;
 }
