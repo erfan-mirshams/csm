@@ -11,13 +11,16 @@
 #define EXPERTISE_SIZE 4
 #define EXPERTISE_COLUMN_SIZE 6
 #define EMPLOYEE_COLUMN_SIZE 4
+#define TEAM_COLUMN_SIZE 5
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
 enum EMPLOYEE_COLUMN {EMP_ID, EMP_NAME, EMP_AGE, EMP_LEVEL};
 enum EXPERTISE_COLUMN {EXP_LEVEL, EXP_BASE_SALARY, EXP_SALARY_PER_HOUR, EXP_SALARY_PER_EXTRA_HOUR, EXP_OFFICIAL_WORKING_HOURS, EXP_TAX_PERCENTAGE};
+enum TEAM_COLUMN {TEAM_ID, TEAM_HEAD_ID, TEAM_MEMBER_IDS, TEAM_BONUS_MIN_WORKING_HOURS, TEAM_BONUS_WORKING_HOURS_MAX_VARIANCE};
+
 using namespace std;
-const string FILE_NAMES[] = {"employees.csv", "salary_configs.csv", "teams.csv", "working_hours.csv"};
+const string FILE_NAMES[] = {"salary_configs.csv" ,"employees.csv", "teams.csv", "working_hours.csv"};
 const string LEVEL_NAMES[] = {"junior", "expert", "senior", "team_lead"};
 
 class Expertise{
@@ -77,18 +80,14 @@ class PedarSahab{
         PedarSahab();
         Expertise *getExpertiseByInd(int ind);
         void addEmployee(int id, string name, int age, Expertise* expertise);
-        void updateExpertise(int ind, LEVEL level, int baseSalary, int salaryPerHour, int salaryPerExtraHour, int officialWorkingHours, int taxPercentage){
-            expertise[ind] = Expertise(level, baseSalary, salaryPerHour, salaryPerExtraHour, officialWorkingHours, taxPercentage);
-        }
+        void updateExpertise(int ind, LEVEL level, int baseSalary, int salaryPerHour, int salaryPerExtraHour, int officialWorkingHours, int taxPercentage);
     private:
         vector<Employee*> employees;
         vector<Team*> teams;
         Expertise expertise[EXPERTISE_SIZE];
 };
 
-PedarSahab::PedarSahab(){
-
-}
+PedarSahab::PedarSahab(){}
 
 Expertise *PedarSahab::getExpertiseByInd(int ind){
     return &(expertise[ind]);
@@ -96,6 +95,10 @@ Expertise *PedarSahab::getExpertiseByInd(int ind){
 
 void PedarSahab::addEmployee(int id, string name, int age, Expertise *expertise){
     employees.push_back(new Employee(id, name, age, expertise));
+}
+
+void PedarSahab::updateExpertise(int ind, LEVEL level, int baseSalary, int salaryPerHour, int salaryPerExtraHour, int officialWorkingHours, int taxPercentage){
+    expertise[ind] = Expertise(level, baseSalary, salaryPerHour, salaryPerExtraHour, officialWorkingHours, taxPercentage);
 }
 
 vector<vector<string>> readCSV(string fileName){
@@ -107,7 +110,7 @@ vector<vector<string>> readCSV(string fileName){
        vector<string> elements;
        istringstream line(lineOfFile);
        string fileElement;
-       while(getline(inputFile, fileElement, ',')){
+       while(getline(line, fileElement, ',')){
            elements.push_back(fileElement);
        }
        readedFile.push_back(elements);
@@ -186,8 +189,12 @@ void readExpertise(vector<vector<string>> salaryConfigsReadFile, PedarSahab &ped
                 taxPercentage = stoi(salaryConfigsReadFile[i][j]);
             }
         }
-        pedarSahab.updateExpertise(i, level, baseSalary, salaryPerHour, salaryPerExtraHour, officialWorkingHours, taxPercentage);
+        pedarSahab.updateExpertise((int)level, level, baseSalary, salaryPerHour, salaryPerExtraHour, officialWorkingHours, taxPercentage);
     }
+}
+
+void readTeams(vector<vector<string>> teamsReadFile, PedarSahab &pedarSahab){
+
 }
 
 PedarSahab readInput(){
@@ -198,8 +205,7 @@ PedarSahab readInput(){
             readEmployees(readCSV(ASSETS_FOLDER + FILE_NAMES[i]), pedarSahab);
         }
         if(i == SALARY_CONFIG_FILE){
-            vector<vector<string>> salaryConfigsFile = readCSV(ASSETS_FOLDER + FILE_NAMES[i]);
-            //handling
+            readExpertise(readCSV(ASSETS_FOLDER + FILE_NAMES[i]), pedarSahab);
         }
         if (i == TEAMS_FILE){
             vector<vector<string>> teamsFile = readCSV(ASSETS_FOLDER + FILE_NAMES[i]);
