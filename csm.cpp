@@ -13,10 +13,12 @@
 #define DIRECTORY_DELIM "/"
 #define CSV_DELIM ','
 #define MEMBER_ID_DELIM '$'
+#define WORK_INTERVAL_DELIM '-'
 #define EXPERTISE_SIZE 4
 #define EXPERTISE_COLUMN_SIZE 6
 #define EMPLOYEE_COLUMN_SIZE 4
 #define TEAM_COLUMN_SIZE 5
+#define WORKING_HOURS_COLUMN_SIZE 3
 #define SKIPPED_LINE_CNT 1
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
@@ -24,6 +26,7 @@ enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
 enum EMPLOYEE_COLUMN {EMP_ID, EMP_NAME, EMP_AGE, EMP_LEVEL};
 enum EXPERTISE_COLUMN {EXP_LEVEL, EXP_BASE_SALARY, EXP_SALARY_PER_HOUR, EXP_SALARY_PER_EXTRA_HOUR, EXP_OFFICIAL_WORKING_HOURS, EXP_TAX_PERCENTAGE};
 enum TEAM_COLUMN {TEAM_ID, TEAM_HEAD_ID, TEAM_MEMBER_IDS, TEAM_BONUS_MIN_WORKING_HOURS, TEAM_BONUS_WORKING_HOURS_MAX_VARIANCE};
+enum WORKIN_HOURS_COLUMN {WORK_H_EMPLOYEE_ID, WORK_H_DAY, WORK_H_WORKING_INTERVAL};
 
 using namespace std;
 const string FILE_NAMES[] = {"salary_configs.csv" ,"employees.csv", "teams.csv", "working_hours.csv"};
@@ -59,12 +62,13 @@ class Employee{
         Employee(int id, string name, int age, Expertise* expertise);
         bool isIdLessThan(Employee b);
         int getId();
+        void updateWorkingHours(int day, int intervalStart, int intervalFinish);
     private:
         int id;
         string name;
         int age;
         Expertise *expertise;
-        int isWorking[DAYS_IN_MONTH][HOURS_IN_DAY];
+        bool isWorking[DAYS_IN_MONTH][HOURS_IN_DAY];
 };
 
 Employee::Employee(int id, string name, int age, Expertise* expertise){
@@ -72,6 +76,11 @@ Employee::Employee(int id, string name, int age, Expertise* expertise){
     this -> name = name;
     this -> age = age;
     this -> expertise = expertise;
+    for(int i = 0; i < DAYS_IN_MONTH; i++){
+        for(int j = 0; j < HOURS_IN_DAY; j++){
+            isWorking[i][j] = false;
+        }
+    }
 }
 
 bool Employee::isIdLessThan(Employee b){
@@ -80,6 +89,13 @@ bool Employee::isIdLessThan(Employee b){
 
 int Employee::getId(){
     return id;
+}
+
+void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish){
+    //exception handling if toggling and already on bit or day is not in 1-30 range or ...
+    for(int i = intervalStart; i < intervalFinish; i++){
+        isWorking[day][i] = true;
+    }
 }
 
 bool employeeCmpById(Employee* a, Employee* b){
@@ -143,6 +159,7 @@ class PedarSahab{
         void addEmployee(string id, string name, string age, string expertise);
         void updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage);
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
+        void updateEmployeeWorkingDay(string id, string day, string workInterval);
     private:
         vector<Employee*> employees;
         vector<Team*> teams;
@@ -197,6 +214,12 @@ void PedarSahab::addTeam(string teamId, string teamHeadId, string memberIds, str
         members.push_back(findEmployeeById(memberIdList[i]));
     }
     teams.push_back(new Team(id, head, members, stoi(bonusMinWorkingHours), stof(bonusWorkingHoursMaxVariance)));
+}
+
+void PedarSahab::updateEmployeeWorkingDay(string id, string day, string workInterval){
+    Employee* employee = findEmployeeById(id);
+    vector<string> intervalStr = splitString(workInterval, WORK_INTERVAL_DELIM);
+    employee -> updateWorkingHours(stoi(day), stoi(intervalStr[0]), stoi(intervalStr[1]));
 }
 
 vector<vector<string>> readCSV(string fileName){
@@ -293,6 +316,26 @@ void readTeams(vector<vector<string>> teamsReadFile, PedarSahab &pedarSahab){
             }
         }
         pedarSahab.addTeam(id, headId, memberIds, bonusMinWorkingHours, BonusWorkingHoursMaxVariance);
+    }
+}
+
+void readWorkingHours(vector<vector<string>> workingHoursReadFile, PedarSahab &pedarSahab){
+    for(int i = SKIPPED_LINE_CNT; i < (int)workingHoursReadFile.size(); i++){
+        string id;
+        string day;
+        string workingInterval;
+        for(int j = 0; j < WORKING_HOURS_COLUMN_SIZE; j++){
+            if(j == WORK_H_EMPLOYEE_ID){
+                id = workingHoursReadFile[i][j];
+            }
+            if(j == WORK_H_DAY){
+                day = workingHoursReadFile[i][j];
+            }
+            if(j == WORK_H_WORKING_INTERVAL){
+                workingInterval = workingHoursReadFile[i][j];
+            }
+        }
+        pedarSahab.updateEmployeeWorkingDay(id, day, workingInterval);
     }
 }
 
