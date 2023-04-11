@@ -9,17 +9,21 @@
 #define HOURS_IN_DAY 24
 #define ASSETS_FOLDER "assets/"
 #define EXPERTISE_SIZE 4
+#define EXPERTISE_COLUMN_SIZE 6
 #define EMPLOYEE_COLUMN_SIZE 4
 
-enum FILE_NAME {EMPLOYEE_FILE, SALARY_CONFIG_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
+enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
 enum EMPLOYEE_COLUMN {EMP_ID, EMP_NAME, EMP_AGE, EMP_LEVEL};
+enum EXPERTISE_COLUMN {EXP_LEVEL, EXP_BASE_SALARY, EXP_SALARY_PER_HOUR, EXP_SALARY_PER_EXTRA_HOUR, EXP_OFFICIAL_WORKING_HOURS, EXP_TAX_PERCENTAGE};
 using namespace std;
 const string FILE_NAMES[] = {"employees.csv", "salary_configs.csv", "teams.csv", "working_hours.csv"};
 const string LEVEL_NAMES[] = {"junior", "expert", "senior", "team_lead"};
 
 class Expertise{
     public:
+        Expertise();
+        Expertise(LEVEL level, int baseSalary, int salaryPerHour, int SalaryPerExtraHour, int officialWorkingHours, int taxPercentage);
         void updateLevel(int level);
     private:
         LEVEL level;
@@ -30,8 +34,15 @@ class Expertise{
         int taxPercentage;
 };
 
-void Expertise::updateLevel(int level){
-    this -> level = (LEVEL)level;
+Expertise::Expertise(){}
+
+Expertise::Expertise(LEVEL level, int baseSalary, int salaryPerHour, int salaryPerExtraHour, int officialWorkingHours, int taxPercentage){
+            this -> level = level;
+            this -> baseSalary = baseSalary;
+            this -> salaryPerHour = salaryPerHour;
+            this -> salaryPerExtraHour = salaryPerExtraHour;
+            this -> officialWorkingHours = officialWorkingHours;
+            this -> taxPercentage = taxPercentage;
 }
 
 class Employee{
@@ -66,6 +77,9 @@ class PedarSahab{
         PedarSahab();
         Expertise *getExpertiseByInd(int ind);
         void addEmployee(int id, string name, int age, Expertise* expertise);
+        void updateExpertise(int ind, LEVEL level, int baseSalary, int salaryPerHour, int salaryPerExtraHour, int officialWorkingHours, int taxPercentage){
+            expertise[ind] = Expertise(level, baseSalary, salaryPerHour, salaryPerExtraHour, officialWorkingHours, taxPercentage);
+        }
     private:
         vector<Employee*> employees;
         vector<Team*> teams;
@@ -73,9 +87,7 @@ class PedarSahab{
 };
 
 PedarSahab::PedarSahab(){
-    for(int i = 0; i < EXPERTISE_SIZE; i++){
-        expertise[i].updateLevel(i);
-    }
+
 }
 
 Expertise *PedarSahab::getExpertiseByInd(int ind){
@@ -148,7 +160,33 @@ void readEmployees(vector<vector<string>> employeeReadFile, PedarSahab &pedarSah
 
 void readExpertise(vector<vector<string>> salaryConfigsReadFile, PedarSahab &pedarSahab){
     for(int i = 0; i < (int)salaryConfigsReadFile.size(); i++){
-
+        LEVEL level;
+        int baseSalary;
+        int salaryPerHour;
+        int salaryPerExtraHour;
+        int officialWorkingHours;
+        int taxPercentage;
+        for(int j = 0; j < EXPERTISE_COLUMN_SIZE; j++){
+            if(j == EXP_LEVEL){
+                level = (LEVEL)getExpertiseToken(salaryConfigsReadFile[i][j]);
+            }
+            if(j == EXP_BASE_SALARY){
+                baseSalary = stoi(salaryConfigsReadFile[i][j]);
+            }
+            if(j == EXP_SALARY_PER_HOUR){
+                salaryPerHour = stoi(salaryConfigsReadFile[i][j]);
+            }
+            if(j == EXP_SALARY_PER_EXTRA_HOUR){
+                salaryPerExtraHour = stoi(salaryConfigsReadFile[i][j]);
+            }
+            if(j == EXP_OFFICIAL_WORKING_HOURS){
+                officialWorkingHours = stoi(salaryConfigsReadFile[i][j]);
+            }
+            if(j == EXP_TAX_PERCENTAGE){
+                taxPercentage = stoi(salaryConfigsReadFile[i][j]);
+            }
+        }
+        pedarSahab.updateExpertise(i, level, baseSalary, salaryPerHour, salaryPerExtraHour, officialWorkingHours, taxPercentage);
     }
 }
 
