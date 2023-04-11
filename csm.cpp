@@ -116,6 +116,7 @@ class Team{
 Team::Team(int id, Employee* head, vector<Employee*> members, int bonusMinWorkingHours, double bonusWorkingHoursMaxVariance){
     this -> id = id;
     this -> head = head;
+    sort(all(members), employeeCmpById);
     this -> members = members;
     this -> bonusMinWorkingHours = bonusMinWorkingHours;
     this -> bonusWorkingHoursMaxVariance = bonusWorkingHoursMaxVariance;
@@ -354,8 +355,7 @@ PedarSahab readInput(string assetsFolder){
             readTeams(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
         if (i == WORKING_HOURS_FILE){
-            vector<vector<string>> workingHoursFile = readCSV(assetsFolder + FILE_NAMES[i]);
-            //handling
+            readWorkingHours(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
     }
     return pedarSahab;
