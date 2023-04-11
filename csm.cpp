@@ -10,7 +10,7 @@
 #define FILE_SIZE 4
 #define DAYS_IN_MONTH 30
 #define HOURS_IN_DAY 24
-#define ASSETS_FOLDER "assets/"
+#define DIRECTORY_DELIM "/"
 #define CSV_DELIM ','
 #define EXPERTISE_SIZE 4
 #define EXPERTISE_COLUMN_SIZE 6
@@ -231,22 +231,22 @@ void readTeams(vector<vector<string>> teamsReadFile, PedarSahab &pedarSahab){
 
 }
 
-PedarSahab readInput(){
+PedarSahab readInput(string assetsFolder){
     PedarSahab pedarSahab;
 
     for(int i = 0; i < FILE_SIZE; i++){
         if(i == EMPLOYEE_FILE){
-            readEmployees(readCSV(ASSETS_FOLDER + FILE_NAMES[i]), pedarSahab);
+            readEmployees(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
         if(i == SALARY_CONFIG_FILE){
-            readExpertise(readCSV(ASSETS_FOLDER + FILE_NAMES[i]), pedarSahab);
+            readExpertise(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
         if (i == TEAMS_FILE){
-            vector<vector<string>> teamsFile = readCSV(ASSETS_FOLDER + FILE_NAMES[i]);
+            vector<vector<string>> teamsFile = readCSV(assetsFolder + FILE_NAMES[i]);
             //handling
         }
         if (i == WORKING_HOURS_FILE){
-            vector<vector<string>> workingHoursFile = readCSV(ASSETS_FOLDER + FILE_NAMES[i]);
+            vector<vector<string>> workingHoursFile = readCSV(assetsFolder + FILE_NAMES[i]);
             //handling
         }
     }
@@ -254,6 +254,6 @@ PedarSahab readInput(){
 }
 
 int main(int argc, char *argv[]) {
-
+    readInput((string)*argv + DIRECTORY_DELIM);
     return 0;
 }
