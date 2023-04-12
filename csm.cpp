@@ -340,9 +340,7 @@ void readWorkingHours(vector<vector<string>> workingHoursReadFile, PedarSahab &p
     }
 }
 
-PedarSahab readInput(string assetsFolder){
-    PedarSahab pedarSahab;
-
+void readInput(string assetsFolder, PedarSahab &pedarSahab){
     for(int i = 0; i < FILE_SIZE; i++){
         if(i == EMPLOYEE_FILE){
             readEmployees(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
@@ -358,12 +356,12 @@ PedarSahab readInput(string assetsFolder){
             readWorkingHours(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
         }
     }
-    return pedarSahab;
 }
 
 int main(int argc, char *argv[]) {
+    PedarSahab pedarSahab;
     if(argc == 2){
-        readInput((string)*argv + DIRECTORY_DELIM);
+        readInput((string)*argv + DIRECTORY_DELIM, pedarSahab);
     }
     return 0;
 }
