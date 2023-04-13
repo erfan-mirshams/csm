@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 
 #define all(x) x.begin(), x.end()
 
@@ -183,13 +184,30 @@ int getExpertiseToken(string tokenStr){
     return token;
 }
 
+string trimBoth(string str){
+    int stPos, fnPos;
+    for(int i = 0; i < (int)str.size(); i++){
+        if(!isspace(str[i])){
+            stPos = i;
+            break;
+        }
+    }
+    for(int i = (int)str.size() - 1; ~i; i--){
+        if(!isspace(str[i])){
+            fnPos = i + 1;
+            break;
+        }
+    }
+    return str.substr(stPos, fnPos - stPos);
+}
+
 vector<string> splitString(string str, char delim){
      vector<string> elements;
      istringstream strStream(str);
      string element;
 
      while(getline(strStream, element, delim)){
-         elements.push_back(element);
+         elements.push_back(trimBoth(element));
      }
 
      return elements;
