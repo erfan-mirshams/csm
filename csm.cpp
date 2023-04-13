@@ -15,6 +15,7 @@
 #define CSV_DELIM ','
 #define MEMBER_ID_DELIM '$'
 #define WORK_INTERVAL_DELIM '-'
+#define CMD_DELIM ' '
 #define EXPERTISE_SIZE 4
 #define EXPERTISE_COLUMN_SIZE 6
 #define EMPLOYEE_COLUMN_SIZE 4
@@ -426,13 +427,20 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
     }
 }
 
+void handleCommand(string cmdLine, PedarSahab pedarSahab){
+
+}
+
 int main(int argc, char *argv[]) {
     PedarSahab pedarSahab;
     if(argc == 2){
         readInput((string)*(argv+1) + DIRECTORY_DELIM, pedarSahab);
     }
     pedarSahab.outputPedarSahab();
-
+    string cmdLine;
+    while(getline(cin, cmdLine)){
+        handleCommand(cmdLine, pedarSahab);
+    }
     pedarSahab.freeMemory();
     return 0;
 }
