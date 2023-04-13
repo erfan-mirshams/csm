@@ -205,6 +205,7 @@ class PedarSahab{
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
         void updateEmployeeWorkingDay(string id, string day, string workInterval);
         void outputPedarSahab();
+        void freeMemory();
     private:
         vector<Employee*> employees;
         vector<Team*> teams;
@@ -261,6 +262,15 @@ void PedarSahab::outputPedarSahab(){
     for (int i = 0; i < (int)teams.size(); ++i)
         teams[i] -> outputTeam();
     cout << endl;
+}
+
+void PedarSahab::freeMemory(){
+    for(int i = 0; i < (int)employees.size(); i++){
+        delete employees[i];
+    }
+    for(int i = 0; i < (int)teams.size(); i++){
+        delete teams[i];
+    }
 }
 
 vector<vector<string>> readCSV(string fileName){
@@ -404,5 +414,7 @@ int main(int argc, char *argv[]) {
         readInput((string)*(argv+1) + DIRECTORY_DELIM, pedarSahab);
     }
     pedarSahab.outputPedarSahab();
+
+    pedarSahab.freeMemory();
     return 0;
 }
