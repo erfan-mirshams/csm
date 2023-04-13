@@ -35,8 +35,9 @@ const string LEVEL_NAMES[] = {"junior", "expert", "senior", "team_lead"};
 class Expertise{
     public:
         Expertise();
-        Expertise(LEVEL level, int baseSalary, int salaryPerHour, int SalaryPerExtraHour, int officialWorkingHours, int taxPercentage);
-        void updateLevel(int level);
+        Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _SalaryPerExtraHour, int _officialWorkingHours, int _taxPercentage);
+        string getLevelName();
+        void outputExpertise();
     private:
         LEVEL level;
         int baseSalary;
@@ -48,21 +49,33 @@ class Expertise{
 
 Expertise::Expertise(){}
 
-Expertise::Expertise(LEVEL level, int baseSalary, int salaryPerHour, int salaryPerExtraHour, int officialWorkingHours, int taxPercentage){
-            this -> level = level;
-            this -> baseSalary = baseSalary;
-            this -> salaryPerHour = salaryPerHour;
-            this -> salaryPerExtraHour = salaryPerExtraHour;
-            this -> officialWorkingHours = officialWorkingHours;
-            this -> taxPercentage = taxPercentage;
+Expertise::Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _salaryPerExtraHour, int _officialWorkingHours, int _taxPercentage){
+    level = _level;
+    baseSalary = _baseSalary;
+    salaryPerHour = _salaryPerHour;
+    salaryPerExtraHour = _salaryPerExtraHour;
+    officialWorkingHours = _officialWorkingHours;
+    taxPercentage = _taxPercentage;
+}
+
+string Expertise::getLevelName(){
+    return LEVEL_NAMES[level];
+}
+
+void Expertise::outputExpertise(){
+    cout << baseSalary << "YESPLS\n";
+    cout << LEVEL_NAMES[level] << endl;
+    cout << "Base salary: " << baseSalary << " Salary per hour: " << salaryPerHour << " Salary per extra hour: "
+         << salaryPerExtraHour << " Official working hours: " << officialWorkingHours << " tax: " << taxPercentage << endl;
 }
 
 class Employee{
     public:
-        Employee(int id, string name, int age, Expertise* expertise);
+        Employee(int _id, string _name, int _age, Expertise* _expertise);
         bool isIdLessThan(Employee b);
         int getId();
         void updateWorkingHours(int day, int intervalStart, int intervalFinish);
+        void outputEmployee();
     private:
         int id;
         string name;
@@ -71,11 +84,11 @@ class Employee{
         bool isWorking[DAYS_IN_MONTH][HOURS_IN_DAY];
 };
 
-Employee::Employee(int id, string name, int age, Expertise* expertise){
-    this -> id = id;
-    this -> name = name;
-    this -> age = age;
-    this -> expertise = expertise;
+Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
+    id = _id;
+    name = _name;
+    age = _age;
+    expertise = _expertise;
     for(int i = 0; i < DAYS_IN_MONTH; i++){
         for(int j = 0; j < HOURS_IN_DAY; j++){
             isWorking[i][j] = false;
@@ -92,13 +105,15 @@ int Employee::getId(){
 }
 
 void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish){
-    //exception handling if toggling and already on bit or day is not in 1-30 range or ...
     for(int i = intervalStart; i < intervalFinish; i++){
         isWorking[day][i] = true;
     }
 }
 
-
+void Employee::outputEmployee(){
+    cout << expertise->getLevelName() << endl;
+    cout << "Id and name: " << id << ' ' << name << " Age: " << age << " Expertise: " << expertise->getLevelName() << endl;
+}
 
 bool employeeCmpById(Employee* a, Employee* b){
     return a -> isIdLessThan(*b);
@@ -126,6 +141,7 @@ Employee* findEmployeeById(int id, const vector<Employee*> &employees){
 class Team{
     public:
         Team(int id, Employee* head, vector<Employee*> members, int bonusMinWorkingHours, double bonusWorkingHoursMaxVariance);
+        void outputTeam();
     private:
         int id;
         Employee* head;
@@ -141,6 +157,15 @@ Team::Team(int id, Employee* head, vector<Employee*> members, int bonusMinWorkin
     this -> members = members;
     this -> bonusMinWorkingHours = bonusMinWorkingHours;
     this -> bonusWorkingHoursMaxVariance = bonusWorkingHoursMaxVariance;
+}
+
+void Team::outputTeam(){
+    cout << "Team id: " << id << "Head id: " << head -> getId() << endl;
+    cout << "And there are " << (int)members.size() << " members which are:" << endl;
+    for (auto member : members)
+        cout << member -> getId() << ' ';
+    cout << "Minimum working hours for getting bonus and variance thing: " << bonusMinWorkingHours << ' ' <<
+        bonusWorkingHoursMaxVariance << endl;
 }
 
 int getExpertiseToken(string tokenStr){
@@ -181,6 +206,7 @@ class PedarSahab{
         void updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage);
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
         void updateEmployeeWorkingDay(string id, string day, string workInterval);
+        void outputPedarSahab();
     private:
         vector<Employee*> employees;
         vector<Team*> teams;
@@ -205,7 +231,6 @@ void PedarSahab::updateExpertise(string level, string baseSalary, string salaryP
     expertise[getExpertiseToken(level)] = Expertise((LEVEL)getExpertiseToken(level), stoi(baseSalary), stoi(salaryPerHour), stoi(salaryPerExtraHour), stoi(officialWorkingHours), stoi(taxPercentage));
 }
 
-
 void PedarSahab::addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance){
     int id = stoi(teamId);
     Employee* head = findEmployeeById(stoi(teamHeadId), employees);
@@ -223,17 +248,34 @@ void PedarSahab::updateEmployeeWorkingDay(string id, string day, string workInte
     employee -> updateWorkingHours(stoi(day), stoi(intervalStr[0]), stoi(intervalStr[1]));
 }
 
+void PedarSahab::outputPedarSahab(){
+    cout << "Epertise: " << endl;
+    for (int i = 0; i < EXPERTISE_SIZE; ++i)
+        expertise[i].outputExpertise();
+    cout << endl;
+    
+    cout << "Employees: " << endl;
+    for (int i = 0; i < (int)employees.size(); ++i)
+        employees[i] -> outputEmployee();
+    cout << endl;
+    
+    cout << "Teams: " << endl;
+    for (int i = 0; i < (int)teams.size(); ++i)
+        teams[i] -> outputTeam();
+    cout << endl;
+}
+
 vector<vector<string>> readCSV(string fileName){
-   ifstream inputFile(fileName);
-   vector<vector<string>> readedFile;
-   string lineOfFile;
+    ifstream inputFile(fileName);
+    vector<vector<string>> readedFile;
+    string lineOfFile;
 
-   while(getline(inputFile, lineOfFile)){
-       readedFile.push_back(splitString(lineOfFile, CSV_DELIM));
-   }
+    while(getline(inputFile, lineOfFile)){
+        readedFile.push_back(splitString(lineOfFile, CSV_DELIM));
+    }
 
-   inputFile.close();
-   return readedFile;
+    inputFile.close();
+    return readedFile;
 }
 
 void readEmployees(vector<vector<string>> employeeReadFile, PedarSahab &pedarSahab){
@@ -361,7 +403,8 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
 int main(int argc, char *argv[]) {
     PedarSahab pedarSahab;
     if(argc == 2){
-        readInput((string)*argv + DIRECTORY_DELIM, pedarSahab);
+        readInput((string)*(argv+1) + DIRECTORY_DELIM, pedarSahab);
     }
+    pedarSahab.outputPedarSahab();
     return 0;
 }
