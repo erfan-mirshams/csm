@@ -8,7 +8,7 @@
 #define all(x) x.begin(), x.end()
 
 #define FILE_SIZE 4
-#define DAYS_IN_MONTH 30
+#define DAYS_IN_MONTH 31
 #define HOURS_IN_DAY 24
 #define DIRECTORY_DELIM "/"
 #define CSV_DELIM ','
@@ -63,7 +63,6 @@ string Expertise::getLevelName(){
 }
 
 void Expertise::outputExpertise(){
-    cout << baseSalary << "YESPLS\n";
     cout << LEVEL_NAMES[level] << endl;
     cout << "Base salary: " << baseSalary << " Salary per hour: " << salaryPerHour << " Salary per extra hour: "
          << salaryPerExtraHour << " Official working hours: " << officialWorkingHours << " tax: " << taxPercentage << endl;
@@ -111,7 +110,6 @@ void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish
 }
 
 void Employee::outputEmployee(){
-    cout << expertise->getLevelName() << endl;
     cout << "Id and name: " << id << ' ' << name << " Age: " << age << " Expertise: " << expertise->getLevelName() << endl;
 }
 
@@ -140,7 +138,7 @@ Employee* findEmployeeById(int id, const vector<Employee*> &employees){
 
 class Team{
     public:
-        Team(int id, Employee* head, vector<Employee*> members, int bonusMinWorkingHours, double bonusWorkingHoursMaxVariance);
+        Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance);
         void outputTeam();
     private:
         int id;
@@ -150,13 +148,13 @@ class Team{
         double bonusWorkingHoursMaxVariance;
 };
 
-Team::Team(int id, Employee* head, vector<Employee*> members, int bonusMinWorkingHours, double bonusWorkingHoursMaxVariance){
-    this -> id = id;
-    this -> head = head;
+Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance){
+    id = _id;
+    head = _head;
+    members = _members;
     sort(all(members), employeeCmpById);
-    this -> members = members;
-    this -> bonusMinWorkingHours = bonusMinWorkingHours;
-    this -> bonusWorkingHoursMaxVariance = bonusWorkingHoursMaxVariance;
+    bonusMinWorkingHours = _bonusMinWorkingHours;
+    bonusWorkingHoursMaxVariance = _bonusWorkingHoursMaxVariance;
 }
 
 void Team::outputTeam(){
