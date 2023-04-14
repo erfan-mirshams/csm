@@ -17,7 +17,6 @@
 #define CSV_DELIM ','
 #define MEMBER_ID_DELIM '$'
 #define WORK_INTERVAL_DELIM '-'
-#define CMD_DELIM ' '
 #define EXPERTISE_SIZE 4
 #define EXPERTISE_COLUMN_SIZE 6
 #define EMPLOYEE_COLUMN_SIZE 4
@@ -193,6 +192,31 @@ string trimBoth(string str){
         }
     }
     return str.substr(stPos, fnPos - stPos);
+}
+
+string wordFromPosition(string::iterator &it, string::iterator fn) {
+    while (isspace(*(it++)))
+        ;
+    --it;
+    string::iterator i = it;
+    string res = "";
+    for (; i != fn; ++i) {
+        if (isspace(*i)) {
+            break;
+        }
+        res.push_back(*i);
+    }
+    swap(i, it);
+    return res;
+}
+
+vector<string> splitIntoWords(string str){
+    vector<string> elements;
+    string::iterator it = str.begin();
+    while(it != str.end()){
+        elements.push_back(wordFromPosition(it, str.end()));
+    }
+    return elements;
 }
 
 vector<string> splitString(string str, char delim){
@@ -418,14 +442,21 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
 }
 
 void handleCommand(string cmdLine, PedarSahab &pedarSahab){
-    vector<string> cmdWords = splitString(cmdLine, CMD_DELIM);
-
+    vector<string> cmdWords = splitIntoWords(cmdLine);
+    int cmdInd = CMD_SIZE;
+    for(int i = 0; i < CMD_SIZE; i++){
+        if(cmdWords[0] == CMD_NAMES[i]){
+            cmdInd = i;
+            break;
+        }
+    }
+    cout << "IND: " << cmdInd << endl;
 }
 
 int main(int argc, char *argv[]) {
     PedarSahab pedarSahab;
     if(argc == 2){
-        readInput((string)*(argv+1) + DIRECTORY_DELIM, pedarSahab);
+        readInput((string)argv[1] + DIRECTORY_DELIM, pedarSahab);
     }
     pedarSahab.outputPedarSahab();
     string cmdLine;
