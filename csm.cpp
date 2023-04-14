@@ -44,6 +44,14 @@ const string FILE_NAMES[] = {"salary_configs.csv" ,"employees.csv", "teams.csv",
 const string LEVEL_NAMES[] = {"junior", "expert", "senior", "team_lead"};
 const string CMD_NAMES[] = {"report_salaries", "report_employee_salary", "report_team_salary", "report_total_hours_per_day", "report_employee_per_hour", "show_salary_config", "update_salary_config", "add_working_hours", "delete_working_hours", "update_team_bonus", "find_teams_for_bonus"};
 
+double roundOneDigit(double n){
+    n = n*10;
+    n = int(n+0.5);
+    n = (double)n;
+    n /= 10;
+    return n;
+}
+
 class Expertise{
     public:
         Expertise();
@@ -53,6 +61,8 @@ class Expertise{
         int calculateSalary(int hours);
         int calculateTax(int salary);
         int calculateEarning(int hours);
+        string showConfig();
+        void updateSalary(int newBaseSalary, int newSalaryPerHour, int newSalaryPerExtraHour, int newOfficialWorkingHours, int newTaxPercentage);
     private:
         LEVEL level;
         int baseSalary;
@@ -91,6 +101,24 @@ int Expertise::calculateEarning(int hours){
     return (int)round(result);
 }
 
+string Expertise::showConfig(){
+    ostringstream output;
+    output << "Base Salary: " << baseSalary << endl;
+    output << "Salary Per Hour: " << salaryPerHour << endl;
+    output << "Salary Per Extra Hour: " << salaryPerExtraHour << endl;
+    output << "Official Working Hours: " << officialWorkingHours << endl;
+    output << "Tax: " << taxPercentage << '%' << endl;
+    return output.str();
+}
+
+void Expertise::updateSalary(int newBaseSalary, int newSalaryPerHour, int newSalaryPerExtraHour, int newOfficialWorkingHours, int newTaxPercentage){
+    baseSalary = newBaseSalary;
+    salaryPerHour = newSalaryPerHour;
+    salaryPerExtraHour = newSalaryPerExtraHour;
+    officialWorkingHours = newOfficialWorkingHours;
+    taxPercentage = newTaxPercentage;
+}
+
 void Expertise::outputExpertise(){
     cout << LEVEL_NAMES[level] << endl;
     cout << "Base salary: " << baseSalary << " Salary per hour: " << salaryPerHour << " Salary per extra hour: "
@@ -112,6 +140,8 @@ class Employee{
         int getAbsentDays();
         int totalWorkingHours();
         int hoursInDay(int day);
+        int getCountPresentInHour(int hour);
+
     private:
         int id;
         string name;
@@ -141,6 +171,13 @@ int Employee::hoursInDay(int day){
         hours += isWorking[day][i];
     }
     return hours;
+}
+
+int Employee::getCountPresentInHour(int hour){
+    int count = 0;
+    for (int i = 0; i < DAYS_IN_MONTH; ++i)
+        count += isWorking[i][hour];
+    return count;
 }
 
 int Employee::totalWorkingHours(){
@@ -308,7 +345,7 @@ string Team::getInfo(){
 }
 
 int getExpertiseToken(string tokenStr){
-    int token;
+    int token = NA;
     if(tokenStr == LEVEL_NAMES[JUNIOR]){
         token = JUNIOR;
     }
@@ -392,6 +429,9 @@ class PedarSahab{
         string reportEmployeeSalary(string idStr);
         string reportTeamSalary(string idStr);
         string reportTotalHoursPerDay(string stDaystr, string fnDaystr);
+        string reportEmployeePerHour(string stHour, string endHour);
+        string showSalaryConfig(string level);
+        string updateSalaryConfig(string level, string newBaseSalaryStr, string newSalaryPerHourStr, string newSalaryPerExtraHourStr, string newOfficialWorkingHoursStr, string newTaxPercentageStr);
         void freeMemory();
     private:
         vector<Employee*> employees;
@@ -402,6 +442,9 @@ class PedarSahab{
         int workingHoursInDay(int day);
         vector<int> maxWorkingHours(int st, int fn);
         vector<int> minWorkingHours(int st, int fn);
+        int getCountWorkingInHour(int hour);
+        vector<int> getMaxWorkingHoursInMonth(int sthour, int endHour);
+        vector<int> getMinWorkingHoursInMonth(int sthour, int endHour);
 };
 
 PedarSahab::PedarSahab(){}
@@ -447,6 +490,46 @@ vector<int> PedarSahab::minWorkingHours(int st, int fn){
             res.clear();
             res.push_back(i);
             mn = hours;
+        }
+    }
+    return res;
+}
+
+int PedarSahab::getCountWorkingInHour(int hour){
+    int sum = 0;
+    for (int i = 0; i < (int)employees.size(); ++i){
+        sum += employees[i] -> getCountPresentInHour(hour);
+    }
+    return sum;
+}
+
+vector <int> PedarSahab::getMaxWorkingHoursInMonth(int stHour, int endHour){
+    vector <int> res;
+    int mx = 0;
+    for (int i = stHour; i <= endHour; ++i){
+        int count = getCountWorkingInHour(i);
+        if (count == mx)
+            res.push_back(i);
+        if (count > mx){
+            mx = count;
+            res.clear();
+            res.push_back(i);
+        }
+    }
+    return res;
+}
+
+vector <int> PedarSahab::getMinWorkingHoursInMonth(int stHour, int endHour){
+    vector <int> res;
+    int mn = INF;
+    for (int i = stHour; i <= endHour; ++i){
+        int count = getCountWorkingInHour(i);
+        if (count == mn)
+            res.push_back(i);
+        if (count < mn){
+            mn = count;
+            res.clear();
+            res.push_back(i);
         }
     }
     return res;
@@ -519,7 +602,7 @@ string PedarSahab::reportEmployeeSalary(string idStr){
     ostringstream output;
     Employee* emp = findEmployeeById(stoi(idStr), employees, employeeInd);
     if(emp == NULL){
-        output << "EMPLOYEE_NOT_FOUNT" << endl;
+        output << "EMPLOYEE_NOT_FOUND" << endl;
         return output.str();
     }
     output << emp -> getFullInfo();
@@ -561,6 +644,59 @@ string PedarSahab::reportTotalHoursPerDay(string stDaystr, string fnDaystr){
         output << mn[i] + 1 << " ";
     }
     output << endl;
+    return output.str();
+}
+
+string PedarSahab::reportEmployeePerHour(string stHourStr, string endHourStr){
+    ostringstream output;
+    int stHour = stoi(stHourStr);
+    int endHour = stoi(endHourStr) - 1;
+    if (stHour < 0 || endHour >= HOURS_IN_DAY || stHour > endHour){
+        output << "INVALID_ARGUEMENTS" << endl;
+        return output.str();
+    }
+
+    for (int hour = stHour; hour <= endHour; ++hour)
+        output << hour << "-" << hour+1 << ": " << roundOneDigit((double)getCountWorkingInHour(hour)/(int)employees.size()) << endl;
+    
+    output << LINE_SEPERATOR << endl;
+
+    vector<int> mx = getMaxWorkingHoursInMonth(stHour, endHour);
+    output << "Period(s) with Max Working Employees: ";
+    for (int i = 0; i < (int)mx.size(); ++i)
+        output << mx[i] << '-' << mx[i]+1 << ' ';
+    output << endl;
+    vector<int> mn = getMinWorkingHoursInMonth(stHour, endHour);
+    output << "Period(s) with Min Working Employees: ";
+    for (int i = 0; i < (int)mn.size(); ++i)
+        output << mn[i] << '-' << mn[i]+1 << ' ';
+    output << endl;
+    return output.str();
+}
+
+string PedarSahab::showSalaryConfig(string level){
+    ostringstream output;
+    if (getExpertiseToken(level) == NA){
+        output << "INVALID_LEVEL" << endl;
+        return output.str();
+    }
+    output << expertise[getExpertiseToken(level)].showConfig();
+    return output.str();
+}
+
+string PedarSahab::updateSalaryConfig(string level, string newBaseSalaryStr, string newSalaryPerHourStr, string newSalaryPerExtraHourStr, string newOfficialWorkingHoursStr, string newTaxPercentageStr){
+    ostringstream output;
+    int newBaseSalary = stoi(newBaseSalaryStr);
+    int newSalaryPerHour = stoi(newSalaryPerHourStr);
+    int newSalaryPerExtraHour = stoi(newSalaryPerExtraHourStr);
+    int newOfficialWorkingHours = stoi(newOfficialWorkingHoursStr);
+    int newTaxPercentage = stoi(newTaxPercentageStr);
+    if (getExpertiseToken(level) == NA){
+        output << "INVALID_LEVEL" << endl;
+        return output.str();
+    }
+    expertise[getExpertiseToken(level)].updateSalary(newBaseSalary, newSalaryPerHour, newSalaryPerExtraHour, newOfficialWorkingHours, newTaxPercentage);
+    output << "OK" << endl;
     return output.str();
 }
 
@@ -729,16 +865,26 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
     if(cmdInd == REPORT_TOTAL_HOURS_PER_DAY){
         cout << pedarSahab.reportTotalHoursPerDay(cmdWords[1], cmdWords[2]);
     }
+    if (cmdInd == REPORT_EMPLOYEE_PER_HOUR){
+        cout << pedarSahab.reportEmployeePerHour(cmdWords[1], cmdWords[2]);
+    }
+    if (cmdInd == SHOW_SALARY_CONFIG){
+        cout << pedarSahab.showSalaryConfig(cmdWords[1]);
+    }
+    if (cmdInd == UPDATE_SALARY_CONFIG){
+        cout << pedarSahab.updateSalaryConfig(cmdWords[1], cmdWords[2], cmdWords[3], cmdWords[4], cmdWords[5], cmdWords[6]);
+    }
     cout << "IND: " << cmdInd << endl;
 }
 
 int main(int argc, char *argv[]) {
     PedarSahab pedarSahab;
-    if(argc == 2){
-        readInput((string)argv[1] + DIRECTORY_DELIM, pedarSahab);
-    }
+    
+    readInput((string)argv[1] + DIRECTORY_DELIM, pedarSahab);
+
     pedarSahab.outputPedarSahab();
     string cmdLine;
+
     while(getline(cin, cmdLine)){
         handleCommand(cmdLine, pedarSahab);
     }
