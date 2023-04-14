@@ -24,6 +24,7 @@
 #define TEAM_COLUMN_SIZE 5
 #define WORKING_HOURS_COLUMN_SIZE 3
 #define SKIPPED_LINE_CNT 1
+#define CMD_SIZE 11
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
@@ -31,10 +32,12 @@ enum EMPLOYEE_COLUMN {EMP_ID, EMP_NAME, EMP_AGE, EMP_LEVEL};
 enum EXPERTISE_COLUMN {EXP_LEVEL, EXP_BASE_SALARY, EXP_SALARY_PER_HOUR, EXP_SALARY_PER_EXTRA_HOUR, EXP_OFFICIAL_WORKING_HOURS, EXP_TAX_PERCENTAGE};
 enum TEAM_COLUMN {TEAM_ID, TEAM_HEAD_ID, TEAM_MEMBER_IDS, TEAM_BONUS_MIN_WORKING_HOURS, TEAM_BONUS_WORKING_HOURS_MAX_VARIANCE};
 enum WORKIN_HOURS_COLUMN {WORK_H_EMPLOYEE_ID, WORK_H_DAY, WORK_H_WORKING_INTERVAL};
+enum CMD_INSTANCE {REPORT_SALARIES, REPORT_EMPLOYEE_SALARY, REPORT_TEAM_SALARY, REPORT_TOTAL_HOURS_PER_DAY, REPORT_EMPLOYEE_PER_HOUR, SHOW_SALARY_CONFIG, UPDATE_SALARY_CONFIG, ADD_WORKING_HOURS, DELETE_WORKING_HOURS, UPDATE_TEAM_BONUS, FIND_TEAMS_FOR_BONUS};
 
 using namespace std;
 const string FILE_NAMES[] = {"salary_configs.csv" ,"employees.csv", "teams.csv", "working_hours.csv"};
 const string LEVEL_NAMES[] = {"junior", "expert", "senior", "team_lead"};
+const string CMD_NAMES[] = {"report_salaries", "report_employee_salary", "report_team_salary", "report_total_hours_per_day", "report_employee_per_hour", "show_salary_config", "update_salary_config", "add_working_hours", "delete_working_hours", "update_team_bonus", "find_teams_for_bonus"};
 
 class Expertise{
     public:
@@ -415,6 +418,7 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
 }
 
 void handleCommand(string cmdLine, PedarSahab &pedarSahab){
+    vector<string> cmdWords = splitString(cmdLine, CMD_DELIM);
 
 }
 
