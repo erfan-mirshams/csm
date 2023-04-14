@@ -1059,7 +1059,7 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
 
-    pedarSahab.outputPedarSahab();
+    //pedarSahab.outputPedarSahab();
     string cmdLine;
 
     while(getline(cin, cmdLine)){
