@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include <utility>
+#include <cmath>
 
 #define all(x) x.begin(), x.end()
 
@@ -24,6 +25,8 @@
 #define WORKING_HOURS_COLUMN_SIZE 3
 #define SKIPPED_LINE_CNT 1
 #define CMD_SIZE 11
+#define PERCENTAGE_AMOUNT 100.0
+#define LINE_SEPERATOR "---"
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
@@ -44,6 +47,9 @@ class Expertise{
         Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _SalaryPerExtraHour, int _officialWorkingHours, int _taxPercentage);
         string getLevelName();
         void outputExpertise();
+        int calculateSalary(int hours);
+        int calculateTax(int salary);
+        int calculateEarning(int hours);
     private:
         LEVEL level;
         int baseSalary;
@@ -68,6 +74,24 @@ string Expertise::getLevelName(){
     return LEVEL_NAMES[level];
 }
 
+int Expertise::calculateSalary(int hours){
+    int salary = baseSalary;
+    salary += salaryPerHour * hours;
+    salary += max(0, hours - officialWorkingHours) * (salaryPerExtraHour - salaryPerHour);
+    return salary;
+}
+
+int Expertise::calculateTax(int salary){
+    double result = salary * taxPercentage / PERCENTAGE_AMOUNT;
+    return (int)round(result);
+}
+
+int Expertise::calculateEarning(int hours){
+    int salary = calculateSalary(hours);
+    double result = salary * (PERCENTAGE_AMOUNT - taxPercentage) / PERCENTAGE_AMOUNT;
+    return (int)round(result);
+}
+
 void Expertise::outputExpertise(){
     cout << LEVEL_NAMES[level] << endl;
     cout << "Base salary: " << baseSalary << " Salary per hour: " << salaryPerHour << " Salary per extra hour: "
@@ -77,10 +101,12 @@ void Expertise::outputExpertise(){
 class Employee{
     public:
         Employee(int _id, string _name, int _age, Expertise* _expertise);
-        bool isIdLessThan(Employee b);
-        int getId();
+        int getId() { return id; }
         void updateWorkingHours(int day, int intervalStart, int intervalFinish);
         void outputEmployee();
+        string getBriefInfo();
+        int totalWorkingHours();
+        int totalEarning();
     private:
         int id;
         string name;
@@ -101,12 +127,18 @@ Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
     }
 }
 
-bool Employee::isIdLessThan(Employee b){
-    return (this -> id) < b.id;
+int Employee::totalWorkingHours(){
+    int total = 0;
+    for(int i = 0; i < DAYS_IN_MONTH; i++){
+        for(int j = 0; j < HOURS_IN_DAY; j++){
+            total += isWorking[i][j];
+        }
+    }
+    return total;
 }
 
-int Employee::getId(){
-    return id;
+int Employee::totalEarning(){
+    return expertise -> calculateEarning(totalWorkingHours());
 }
 
 void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish){
@@ -117,6 +149,15 @@ void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish
 
 void Employee::outputEmployee(){
     cout << "Id and name: " << id << ' ' << name << " Age: " << age << " Expertise: " << expertise->getLevelName() << endl;
+}
+
+string Employee::getBriefInfo(){
+    ostringstream output;
+    output << "ID: " << id << endl;
+    output << "Name: " << name << endl;
+    output << "Total Working Hours: " << totalWorkingHours() << endl;
+    output << "Total Earning: " << totalEarning() << endl;
+    return output.str();
 }
 
 Employee* findEmployeeById(int id, const vector<Employee*> &employees, const set< pair<int, int> > &employeeInd){
@@ -178,7 +219,7 @@ int getExpertiseToken(string tokenStr){
 }
 
 string trimBoth(string str){
-    int stPos, fnPos;
+    int stPos = 0, fnPos = (int)str.size();
     for(int i = 0; i < (int)str.size(); i++){
         if(!isspace(str[i])){
             stPos = i;
@@ -240,6 +281,7 @@ class PedarSahab{
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
         void updateEmployeeWorkingDay(string id, string day, string workInterval);
         void outputPedarSahab();
+        string reportSalaries();
         void freeMemory();
     private:
         vector<Employee*> employees;
@@ -296,6 +338,14 @@ void PedarSahab::outputPedarSahab(){
     for (int i = 0; i < (int)teams.size(); ++i)
         teams[i] -> outputTeam();
     cout << endl;
+}
+
+string PedarSahab::reportSalaries(){
+    ostringstream output;
+    for(set< pair<int, int> >::iterator i = employeeInd.begin(); i != employeeInd.end(); ++i){
+        output << employees[i -> second] -> getBriefInfo() << LINE_SEPERATOR << endl;
+    }
+    return output.str();
 }
 
 void PedarSahab::freeMemory(){
@@ -449,6 +499,10 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
             cmdInd = i;
             break;
         }
+    }
+
+    if(cmdInd == REPORT_SALARIES){
+        cout << pedarSahab.reportSalaries();
     }
     cout << "IND: " << cmdInd << endl;
 }
