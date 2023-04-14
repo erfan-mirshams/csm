@@ -105,8 +105,11 @@ class Employee{
         string getBriefInfo();
         string getTeamIdStr();
         string getFullInfo();
+        string outputAsTeamHead();
+        string outputAsTeamMember();
         void setTeamId(int _id) { teamId = _id; };
         int getAbsentDays();
+        int totalWorkingHours();
     private:
         int id;
         string name;
@@ -114,7 +117,7 @@ class Employee{
         Expertise *expertise;
         bool isWorking[DAYS_IN_MONTH][HOURS_IN_DAY];
         int teamId;
-        int totalWorkingHours();
+        int totalEarning();
 };
 
 Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
@@ -138,6 +141,10 @@ int Employee::totalWorkingHours(){
         }
     }
     return total;
+}
+
+int Employee::totalEarning(){
+    return expertise -> calculateEarning(totalWorkingHours());
 }
 
 int Employee::getAbsentDays(){
@@ -168,7 +175,7 @@ string Employee::getBriefInfo(){
     output << "ID: " << id << endl;
     output << "Name: " << name << endl;
     output << "Total Working Hours: " << totalWorkingHours() << endl;
-    output << "Total Earning: " << expertise -> calculateEarning(totalWorkingHours()) << endl;
+    output << "Total Earning: " << totalEarning() << endl;
     return output.str();
 }
 
@@ -191,12 +198,29 @@ string Employee::getFullInfo(){
     output << "Salary: " << expertise -> calculateSalary(totalWorkingHours()) << endl;
     output << "Bonus: " << 0 << endl;
     output << "Tax: " << expertise -> calculateTax(expertise -> calculateSalary(totalWorkingHours())) << endl;
-    output << "Total Earning: " << expertise -> calculateEarning(totalWorkingHours()) << endl;
+    output << "Total Earning: " << totalEarning() << endl;
+    return output.str();
+}
+
+string Employee::outputAsTeamHead(){
+    ostringstream output;
+    output << "Head ID: " << id << endl;
+    output << "Head Name: " << name << endl;
+    return output.str();
+}
+
+string Employee::outputAsTeamMember(){
+    ostringstream output;
+    output << "Member ID: " << id << endl;
+    output << "Total Earning: " << totalEarning() << endl;
     return output.str();
 }
 
 Employee* findEmployeeById(int id, const vector<Employee*> &employees, const set< pair<int, int> > &employeeInd){
     set< pair<int, int> >::iterator indPair = lower_bound(all(employeeInd), make_pair(id, 0));
+    if(indPair == employeeInd.end()){
+        return NULL;
+    }
     if(indPair -> first == id){
         return employees[indPair -> second];
     }
@@ -207,6 +231,7 @@ class Team{
     public:
         Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance);
         void outputTeam();
+        string getInfo();
     private:
         int id;
         Employee* head;
@@ -215,6 +240,8 @@ class Team{
         int bonusMinWorkingHours;
         double bonusWorkingHoursMaxVariance;
         int bonus;
+        int workingHourSum();
+        double workingHourAverage();
 };
 
 Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance){
@@ -237,6 +264,37 @@ void Team::outputTeam(){
         cout << member -> getId() << ' ';
     cout << "Minimum working hours for getting bonus and variance thing: " << bonusMinWorkingHours << ' ' <<
         bonusWorkingHoursMaxVariance << endl;
+}
+
+int Team::workingHourSum(){
+    int sum = 0;
+    for(int i = 0; i < (int)members.size(); i++){
+        sum += members[i] -> totalWorkingHours();
+    }
+    return sum;
+}
+
+double Team::workingHourAverage(){
+    double avg = workingHourSum();
+    avg /= (int)members.size();
+    avg *= 10;
+    avg = round(avg);
+    avg /= 10;
+    return avg;
+}
+
+string Team::getInfo(){
+    ostringstream output;
+    output << "ID: " << id << endl;
+    output << head -> outputAsTeamHead();
+    output << "Team Total Working Hours: " << workingHourSum() << endl;
+    output << "Average Member Working Hours: " << workingHourAverage() << endl;
+    output << "Bonus: " << bonus << endl;
+    output << LINE_SEPERATOR << endl;
+    for(set< pair<int, int> >::iterator i = memberInd.begin(); i != memberInd.end(); ++i){
+        output << members[i -> second] -> outputAsTeamMember() << LINE_SEPERATOR << endl;
+    }
+    return output.str();
 }
 
 int getExpertiseToken(string tokenStr){
@@ -319,8 +377,10 @@ class PedarSahab{
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
         void updateEmployeeWorkingDay(string id, string day, string workInterval);
         void outputPedarSahab();
+        Team* findTeamById(int id);
         string reportSalaries();
         string reportEmployeeSalary(string idStr);
+        string reportTeamSalary(string idStr);
         void freeMemory();
     private:
         vector<Employee*> employees;
@@ -354,6 +414,7 @@ void PedarSahab::addTeam(string teamId, string teamHeadId, string memberIds, str
         members.push_back(findEmployeeById(stoi(memberIdList[i]), employees, employeeInd));
     }
     teams.push_back(new Team(id, head, members, stoi(bonusMinWorkingHours), stof(bonusWorkingHoursMaxVariance)));
+    teamInd.insert(make_pair(id, (int)teams.size() - 1));
 }
 
 void PedarSahab::updateEmployeeWorkingDay(string id, string day, string workInterval){
@@ -379,6 +440,17 @@ void PedarSahab::outputPedarSahab(){
     cout << endl;
 }
 
+Team* PedarSahab::findTeamById(int id){
+    set< pair<int, int> >::iterator indPair = lower_bound(all(teamInd), make_pair(id, 0));
+    if(indPair == teamInd.end()){
+        return NULL;
+    }
+    if(indPair -> first == id){
+        return teams[indPair -> second];
+    }
+    return NULL;
+}
+
 string PedarSahab::reportSalaries(){
     ostringstream output;
     for(set< pair<int, int> >::iterator i = employeeInd.begin(); i != employeeInd.end(); ++i){
@@ -395,6 +467,17 @@ string PedarSahab::reportEmployeeSalary(string idStr){
         return output.str();
     }
     output << emp -> getFullInfo();
+    return output.str();
+}
+
+string PedarSahab::reportTeamSalary(string idStr){
+    ostringstream output;
+    Team* teamPtr = findTeamById(stoi(idStr));
+    if(teamPtr == NULL){
+        output << "TEAM_NOT_FOUND" << endl;
+        return output.str();
+    }
+    output << teamPtr -> getInfo();
     return output.str();
 }
 
@@ -556,6 +639,9 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
     }
     if(cmdInd == REPORT_EMPLOYEE_SALARY){
         cout << pedarSahab.reportEmployeeSalary(cmdWords[1]);
+    }
+    if(cmdInd == REPORT_TEAM_SALARY){
+        cout << pedarSahab.reportTeamSalary(cmdWords[1]);
     }
     cout << "IND: " << cmdInd << endl;
 }
