@@ -1,10 +1,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <utility>
 
 #define all(x) x.begin(), x.end()
 
@@ -115,25 +117,10 @@ void Employee::outputEmployee(){
     cout << "Id and name: " << id << ' ' << name << " Age: " << age << " Expertise: " << expertise->getLevelName() << endl;
 }
 
-bool employeeCmpById(Employee* a, Employee* b){
-    return a -> isIdLessThan(*b);
-}
-
-Employee* findEmployeeById(int id, const vector<Employee*> &employees){
-    int l, r, mid;
-    l = 0;
-    r = (int)employees.size();
-    while(r - l > 1){
-        mid = (l + r) / 2;
-        if(employees[mid] -> getId() <= id){
-            l = mid;
-        }
-        else{
-            r = mid;
-        }
-    }
-    if(employees[l] -> getId() == id){
-        return employees[l];
+Employee* findEmployeeById(int id, const vector<Employee*> &employees, const set< pair<int, int> > &employeeInd){
+    set< pair<int, int> >::iterator indPair = lower_bound(all(employeeInd), make_pair(id, 0));
+    if(indPair -> first == id){
+        return employees[indPair -> second];
     }
     return NULL;
 }
@@ -146,6 +133,7 @@ class Team{
         int id;
         Employee* head;
         vector<Employee*> members;
+        set< pair<int, int> > memberInd;
         int bonusMinWorkingHours;
         double bonusWorkingHoursMaxVariance;
 };
@@ -154,7 +142,9 @@ Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWo
     id = _id;
     head = _head;
     members = _members;
-    sort(all(members), employeeCmpById);
+    for(int i = 0; i < (int)members.size(); i++){
+        memberInd.insert(make_pair(members[i] -> getId(), i));
+    }
     bonusMinWorkingHours = _bonusMinWorkingHours;
     bonusWorkingHoursMaxVariance = _bonusWorkingHoursMaxVariance;
 }
@@ -218,7 +208,6 @@ class PedarSahab{
     public:
         PedarSahab();
         Expertise *getExpertiseByInd(int ind);
-        void sortEmployeesList();
         void addEmployee(string id, string name, string age, string expertise);
         void updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage);
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
@@ -227,7 +216,9 @@ class PedarSahab{
         void freeMemory();
     private:
         vector<Employee*> employees;
+        set< pair<int, int> > employeeInd;
         vector<Team*> teams;
+        set< pair<int, int> > teamInd;
         Expertise expertise[EXPERTISE_SIZE];
 };
 
@@ -237,12 +228,9 @@ Expertise *PedarSahab::getExpertiseByInd(int ind){
     return &(expertise[ind]);
 }
 
-void PedarSahab::sortEmployeesList(){
-    sort(all(employees), employeeCmpById);
-}
-
 void PedarSahab::addEmployee(string id, string name, string age, string expertise){
     employees.push_back(new Employee(stoi(id), name, stoi(age), getExpertiseByInd(getExpertiseToken(expertise))));
+    employeeInd.insert(make_pair(stoi(id), (int)employees.size() - 1));
 }
 
 void PedarSahab::updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage){
@@ -251,17 +239,17 @@ void PedarSahab::updateExpertise(string level, string baseSalary, string salaryP
 
 void PedarSahab::addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance){
     int id = stoi(teamId);
-    Employee* head = findEmployeeById(stoi(teamHeadId), employees);
+    Employee* head = findEmployeeById(stoi(teamHeadId), employees, employeeInd);
     vector<Employee*> members;
     vector<string> memberIdList = splitString(memberIds, MEMBER_ID_DELIM);
     for(int i = 0; i < (int)memberIdList.size(); i++){
-        members.push_back(findEmployeeById(stoi(memberIdList[i]), employees));
+        members.push_back(findEmployeeById(stoi(memberIdList[i]), employees, employeeInd));
     }
     teams.push_back(new Team(id, head, members, stoi(bonusMinWorkingHours), stof(bonusWorkingHoursMaxVariance)));
 }
 
 void PedarSahab::updateEmployeeWorkingDay(string id, string day, string workInterval){
-    Employee* employee = findEmployeeById(stoi(id), employees);
+    Employee* employee = findEmployeeById(stoi(id), employees, employeeInd);
     vector<string> intervalStr = splitString(workInterval, WORK_INTERVAL_DELIM);
     employee -> updateWorkingHours(stoi(day), stoi(intervalStr[0]), stoi(intervalStr[1]));
 }
@@ -413,7 +401,6 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
     for(int i = 0; i < FILE_SIZE; i++){
         if(i == EMPLOYEE_FILE){
             readEmployees(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
-            pedarSahab.sortEmployeesList();
         }
         if(i == SALARY_CONFIG_FILE){
             readExpertise(readCSV(assetsFolder + FILE_NAMES[i]), pedarSahab);
@@ -427,7 +414,7 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
     }
 }
 
-void handleCommand(string cmdLine, PedarSahab pedarSahab){
+void handleCommand(string cmdLine, PedarSahab &pedarSahab){
 
 }
 
