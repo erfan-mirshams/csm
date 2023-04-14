@@ -826,12 +826,12 @@ string PedarSahab::updateTeamBonus(string teamIdStr, string newBonusPercentageSt
     ostringstream output;
     int teamId = stoi(teamIdStr);
     int newBonusPercentage = stoi(newBonusPercentageStr);
-    Team* teamPtr = findTeamById(stoi(teamIdStr));
+    Team* teamPtr = findTeamById(teamId);
     if(teamPtr == NULL){
         output << "TEAM_NOT_FOUND" << endl;
         return output.str();
     }
-    if(newBonusPercentage < 0 || newBonusPercentage > 100){
+    if(newBonusPercentage < 0 || newBonusPercentage > PERCENTAGE_AMOUNT){
         output << "INVALID_ARGUEMENTS" << endl;
         return output.str();
     }
@@ -1040,8 +1040,13 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
 
 int main(int argc, char *argv[]) {
     PedarSahab pedarSahab;
-    
-    readInput((string)argv[1] + DIRECTORY_DELIM, pedarSahab);
+
+    if(argc == 2){
+        readInput((string)argv[1] + DIRECTORY_DELIM, pedarSahab);
+    }
+    else{
+        exit(0);
+    }
 
     pedarSahab.outputPedarSahab();
     string cmdLine;
