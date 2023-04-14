@@ -12,7 +12,7 @@
 #define all(x) x.begin(), x.end()
 
 #define FILE_SIZE 4
-#define DAYS_IN_MONTH 31
+#define DAYS_IN_MONTH 30
 #define HOURS_IN_DAY 24
 #define DIRECTORY_DELIM "/"
 #define CSV_DELIM ','
@@ -27,6 +27,8 @@
 #define CMD_SIZE 11
 #define PERCENTAGE_AMOUNT 100.0
 #define LINE_SEPERATOR "---"
+#define NA -1
+#define NA_STR "N/A"
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
@@ -45,7 +47,7 @@ class Expertise{
     public:
         Expertise();
         Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _SalaryPerExtraHour, int _officialWorkingHours, int _taxPercentage);
-        string getLevelName();
+        string getLevelName() { return LEVEL_NAMES[level]; };
         void outputExpertise();
         int calculateSalary(int hours);
         int calculateTax(int salary);
@@ -68,10 +70,6 @@ Expertise::Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _sal
     salaryPerExtraHour = _salaryPerExtraHour;
     officialWorkingHours = _officialWorkingHours;
     taxPercentage = _taxPercentage;
-}
-
-string Expertise::getLevelName(){
-    return LEVEL_NAMES[level];
 }
 
 int Expertise::calculateSalary(int hours){
@@ -105,14 +103,18 @@ class Employee{
         void updateWorkingHours(int day, int intervalStart, int intervalFinish);
         void outputEmployee();
         string getBriefInfo();
-        int totalWorkingHours();
-        int totalEarning();
+        string getTeamIdStr();
+        string getFullInfo();
+        void setTeamId(int _id) { teamId = _id; };
+        int getAbsentDays();
     private:
         int id;
         string name;
         int age;
         Expertise *expertise;
         bool isWorking[DAYS_IN_MONTH][HOURS_IN_DAY];
+        int teamId;
+        int totalWorkingHours();
 };
 
 Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
@@ -125,6 +127,7 @@ Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
             isWorking[i][j] = false;
         }
     }
+    teamId = NA;
 }
 
 int Employee::totalWorkingHours(){
@@ -137,8 +140,17 @@ int Employee::totalWorkingHours(){
     return total;
 }
 
-int Employee::totalEarning(){
-    return expertise -> calculateEarning(totalWorkingHours());
+int Employee::getAbsentDays(){
+    int presentDays = 0;
+    for(int i = 0; i < DAYS_IN_MONTH; i++){
+        for(int j = 0; j < HOURS_IN_DAY; j++){
+            if(isWorking[i][j]){
+                presentDays++;
+                break;
+            }
+        }
+    }
+    return DAYS_IN_MONTH - presentDays;
 }
 
 void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish){
@@ -156,7 +168,30 @@ string Employee::getBriefInfo(){
     output << "ID: " << id << endl;
     output << "Name: " << name << endl;
     output << "Total Working Hours: " << totalWorkingHours() << endl;
-    output << "Total Earning: " << totalEarning() << endl;
+    output << "Total Earning: " << expertise -> calculateEarning(totalWorkingHours()) << endl;
+    return output.str();
+}
+
+string Employee::getTeamIdStr(){
+    if(teamId == NA){
+        return NA_STR;
+    }
+    return to_string(teamId);
+}
+
+string Employee::getFullInfo(){
+    ostringstream output;
+    output << "ID: " << id << endl;
+    output << "Name: " << name << endl;
+    output << "Age: " << age << endl;
+    output << "Level: " << expertise -> getLevelName() << endl;
+    output << "Team ID: " << getTeamIdStr() << endl;
+    output << "Total Working Hours: " << totalWorkingHours() << endl;
+    output << "Absent Days: " << getAbsentDays() << endl;
+    output << "Salary: " << expertise -> calculateSalary(totalWorkingHours()) << endl;
+    output << "Bonus: " << 0 << endl;
+    output << "Tax: " << expertise -> calculateTax(expertise -> calculateSalary(totalWorkingHours())) << endl;
+    output << "Total Earning: " << expertise -> calculateEarning(totalWorkingHours()) << endl;
     return output.str();
 }
 
@@ -179,6 +214,7 @@ class Team{
         set< pair<int, int> > memberInd;
         int bonusMinWorkingHours;
         double bonusWorkingHoursMaxVariance;
+        int bonus;
 };
 
 Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance){
@@ -187,9 +223,11 @@ Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWo
     members = _members;
     for(int i = 0; i < (int)members.size(); i++){
         memberInd.insert(make_pair(members[i] -> getId(), i));
+        members[i] -> setTeamId(id);
     }
     bonusMinWorkingHours = _bonusMinWorkingHours;
     bonusWorkingHoursMaxVariance = _bonusWorkingHoursMaxVariance;
+    bonus = 0;
 }
 
 void Team::outputTeam(){
@@ -282,6 +320,7 @@ class PedarSahab{
         void updateEmployeeWorkingDay(string id, string day, string workInterval);
         void outputPedarSahab();
         string reportSalaries();
+        string reportEmployeeSalary(string idStr);
         void freeMemory();
     private:
         vector<Employee*> employees;
@@ -320,7 +359,7 @@ void PedarSahab::addTeam(string teamId, string teamHeadId, string memberIds, str
 void PedarSahab::updateEmployeeWorkingDay(string id, string day, string workInterval){
     Employee* employee = findEmployeeById(stoi(id), employees, employeeInd);
     vector<string> intervalStr = splitString(workInterval, WORK_INTERVAL_DELIM);
-    employee -> updateWorkingHours(stoi(day), stoi(intervalStr[0]), stoi(intervalStr[1]));
+    employee -> updateWorkingHours(stoi(day) - 1, stoi(intervalStr[0]), stoi(intervalStr[1]));
 }
 
 void PedarSahab::outputPedarSahab(){
@@ -345,6 +384,17 @@ string PedarSahab::reportSalaries(){
     for(set< pair<int, int> >::iterator i = employeeInd.begin(); i != employeeInd.end(); ++i){
         output << employees[i -> second] -> getBriefInfo() << LINE_SEPERATOR << endl;
     }
+    return output.str();
+}
+
+string PedarSahab::reportEmployeeSalary(string idStr){
+    ostringstream output;
+    Employee* emp = findEmployeeById(stoi(idStr), employees, employeeInd);
+    if(emp == NULL){
+        output << "EMPLOYEE_NOT_FOUNT" << endl;
+        return output.str();
+    }
+    output << emp -> getFullInfo();
     return output.str();
 }
 
@@ -503,6 +553,9 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
 
     if(cmdInd == REPORT_SALARIES){
         cout << pedarSahab.reportSalaries();
+    }
+    if(cmdInd == REPORT_EMPLOYEE_SALARY){
+        cout << pedarSahab.reportEmployeeSalary(cmdWords[1]);
     }
     cout << "IND: " << cmdInd << endl;
 }
