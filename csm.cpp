@@ -59,10 +59,9 @@ class Expertise{
         Expertise();
         Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _SalaryPerExtraHour, int _officialWorkingHours, int _taxPercentage);
         string getLevelName() { return LEVEL_NAMES[level]; };
+        int getTaxPercentage();
         void outputExpertise();
         int calculateSalary(int hours);
-        int calculateTax(int salary);
-        int calculateEarning(int hours);
         string showConfig();
         void updateSalary(int newBaseSalary, int newSalaryPerHour, int newSalaryPerExtraHour, int newOfficialWorkingHours, int newTaxPercentage);
     private:
@@ -85,22 +84,15 @@ Expertise::Expertise(LEVEL _level, int _baseSalary, int _salaryPerHour, int _sal
     taxPercentage = _taxPercentage;
 }
 
+int Expertise::getTaxPercentage(){
+    return taxPercentage;
+}
+
 int Expertise::calculateSalary(int hours){
     int salary = baseSalary;
     salary += salaryPerHour * hours;
     salary += max(0, hours - officialWorkingHours) * (salaryPerExtraHour - salaryPerHour);
     return salary;
-}
-
-int Expertise::calculateTax(int salary){
-    double result = salary * taxPercentage / PERCENTAGE_AMOUNT;
-    return (int)round(result);
-}
-
-int Expertise::calculateEarning(int hours){
-    int salary = calculateSalary(hours);
-    double result = salary * (PERCENTAGE_AMOUNT - taxPercentage) / PERCENTAGE_AMOUNT;
-    return (int)round(result);
 }
 
 string Expertise::showConfig(){
@@ -132,7 +124,9 @@ class Employee{
         Employee(int _id, string _name, int _age, Expertise* _expertise);
         int getId() { return id; }
         void updateWorkingHours(int day, int intervalStart, int intervalFinish);
+        void updateTeamBonusPercentage(int newTeamBonusPercentage);
         void outputEmployee();
+        int calcTotalEarning();
         string getBriefInfo();
         string getTeamIdStr();
         string getFullInfo();
@@ -152,7 +146,8 @@ class Employee{
         Expertise *expertise;
         bool isWorking[DAYS_IN_MONTH][HOURS_IN_DAY];
         int teamId;
-        int totalEarning();
+        int teamBonusPercentage;
+        int getRawSalary();
 };
 
 Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
@@ -165,7 +160,12 @@ Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
             isWorking[i][j] = false;
         }
     }
+    teamBonusPercentage = 0;
     teamId = NA;
+}
+
+void Employee::updateTeamBonusPercentage(int newTeamBonusPercentage){
+    teamBonusPercentage = newTeamBonusPercentage;
 }
 
 int Employee::hoursInDay(int day){
@@ -193,8 +193,17 @@ int Employee::totalWorkingHours(){
     return total;
 }
 
-int Employee::totalEarning(){
-    return expertise -> calculateEarning(totalWorkingHours());
+int Employee::getRawSalary(){
+    return expertise -> calculateSalary(totalWorkingHours());
+}
+
+int Employee::calcTotalEarning(){
+    int rawSalary = getRawSalary();
+    int bonusSalary = (int)round((rawSalary/100.0)*teamBonusPercentage);
+    int taxPercentage = expertise -> getTaxPercentage();
+    int taxAmount = (int)round((rawSalary+bonusSalary)*(PERCENTAGE_AMOUNT - taxPercentage));
+    int totalEarning = rawSalary + bonusSalary - taxAmount;
+    return totalEarning;
 }
 
 int Employee::getAbsentDays(){
@@ -225,7 +234,7 @@ string Employee::getBriefInfo(){
     output << "ID: " << id << endl;
     output << "Name: " << name << endl;
     output << "Total Working Hours: " << totalWorkingHours() << endl;
-    output << "Total Earning: " << totalEarning() << endl;
+    output << "Total Earning: " << calcTotalEarning() << endl;
     return output.str();
 }
 
@@ -238,6 +247,13 @@ string Employee::getTeamIdStr(){
 
 string Employee::getFullInfo(){
     ostringstream output;
+
+    int rawSalary = getRawSalary();
+    int bonusSalary = (int)round((rawSalary/100.0)*teamBonusPercentage);
+    int taxPercentage = expertise -> getTaxPercentage();
+    int taxAmount = (int)round((rawSalary+bonusSalary)*(PERCENTAGE_AMOUNT - taxPercentage));
+    int totalEarning = rawSalary + bonusSalary - taxAmount;
+
     output << "ID: " << id << endl;
     output << "Name: " << name << endl;
     output << "Age: " << age << endl;
@@ -245,10 +261,10 @@ string Employee::getFullInfo(){
     output << "Team ID: " << getTeamIdStr() << endl;
     output << "Total Working Hours: " << totalWorkingHours() << endl;
     output << "Absent Days: " << getAbsentDays() << endl;
-    output << "Salary: " << expertise -> calculateSalary(totalWorkingHours()) << endl;
-    output << "Bonus: " << 0 << endl;
-    output << "Tax: " << expertise -> calculateTax(expertise -> calculateSalary(totalWorkingHours())) << endl;
-    output << "Total Earning: " << totalEarning() << endl;
+    output << "Salary: " << rawSalary << endl;
+    output << "Bonus: " << bonusSalary << endl;
+    output << "Tax: " <<  taxAmount << endl;
+    output << "Total Earning: " << calcTotalEarning() << endl;
     return output.str();
 }
 
@@ -262,7 +278,7 @@ string Employee::outputAsTeamHead(){
 string Employee::outputAsTeamMember(){
     ostringstream output;
     output << "Member ID: " << id << endl;
-    output << "Total Earning: " << totalEarning() << endl;
+    output << "Total Earning: " << calcTotalEarning() << endl;
     return output.str();
 }
 
@@ -371,6 +387,9 @@ string Team::getInfo(){
 
 void Team::updateBonusPercentage(int newBonusPercentage){
     bonus = newBonusPercentage;
+    for (Employee* emp : members){
+        emp -> updateTeamBonusPercentage(newBonusPercentage);
+    }
 }
 
 bool Team::isGoodForBonus(){
@@ -1003,7 +1022,7 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
         cout << pedarSahab.deleteWorkingHours(cmdWords[1], cmdWords[2]);
     }
     if (cmdInd == UPDATE_TEAM_BONUS){
-        cout << pedarSahab.updateTeamBonus();
+        cout << pedarSahab.updateTeamBonus(cmdWords[1], cmdWords[2]);
     }
     if (cmdInd == FIND_TEAMS_FOR_BONUS){
         cout << pedarSahab.findTeamsForBonus();
