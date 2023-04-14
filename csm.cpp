@@ -411,7 +411,7 @@ bool Team::isGoodForBonus(){
     double variance = 0;
     for (int i : workHours)
         variance += (i-avg)*(i-avg);
-    
+    variance /= (int)workHours.size();
     if (totalHours >= bonusMinWorkingHours && variance <= bonusMinWorkingHours)
         return true;
     return false;
