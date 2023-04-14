@@ -282,15 +282,15 @@ void PedarSahab::freeMemory(){
 
 vector<vector<string>> readCSV(string fileName){
     ifstream inputFile(fileName);
-    vector<vector<string>> readedFile;
+    vector<vector<string>> readFile;
     string lineOfFile;
 
     while(getline(inputFile, lineOfFile)){
-        readedFile.push_back(splitString(lineOfFile, CSV_DELIM));
+        readFile.push_back(splitString(lineOfFile, CSV_DELIM));
     }
 
     inputFile.close();
-    return readedFile;
+    return readFile;
 }
 
 void readEmployees(vector<vector<string>> employeeReadFile, PedarSahab &pedarSahab){
