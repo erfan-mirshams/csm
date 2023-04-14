@@ -27,6 +27,7 @@
 #define CMD_SIZE 11
 #define PERCENTAGE_AMOUNT 100.0
 #define LINE_SEPERATOR "---"
+#define NO_UPDATE_STR "-"
 #define NA -1
 #define INF 1e9
 #define NA_STR "N/A"
@@ -48,8 +49,7 @@ const string CMD_NAMES[] = {"report_salaries", "report_employee_salary", "report
 
 double roundOneDigit(double n){
     n = n*10;
-    n = int(n+0.5);
-    n = (double)n;
+    n = round(n);
     n /= 10;
     return n;
 }
@@ -64,7 +64,11 @@ class Expertise{
         void outputExpertise();
         int calculateSalary(int hours);
         string showConfig();
-        void updateSalary(int newBaseSalary, int newSalaryPerHour, int newSalaryPerExtraHour, int newOfficialWorkingHours, int newTaxPercentage);
+        void setBaseSalary(int _baseSalary) { baseSalary = _baseSalary; };
+        void setSalaryPerHour(int _salaryPerHour) { salaryPerHour = _salaryPerHour; };
+        void setSalaryPerExtraHour(int _salaryPerExtraHour) {salaryPerExtraHour = _salaryPerExtraHour; };
+        void setOfficialWorkingHours(int _officialWorkingHours) { officialWorkingHours = _officialWorkingHours; };
+        void setTaxPercentage(int _taxPercentage) { taxPercentage = _taxPercentage; };
     private:
         LEVEL level;
         int baseSalary;
@@ -109,14 +113,6 @@ string Expertise::showConfig(){
     output << "Official Working Hours: " << officialWorkingHours << endl;
     output << "Tax: " << taxPercentage << '%' << endl;
     return output.str();
-}
-
-void Expertise::updateSalary(int newBaseSalary, int newSalaryPerHour, int newSalaryPerExtraHour, int newOfficialWorkingHours, int newTaxPercentage){
-    baseSalary = newBaseSalary;
-    salaryPerHour = newSalaryPerHour;
-    salaryPerExtraHour = newSalaryPerExtraHour;
-    officialWorkingHours = newOfficialWorkingHours;
-    taxPercentage = newTaxPercentage;
 }
 
 void Expertise::outputExpertise(){
@@ -767,16 +763,28 @@ string PedarSahab::showSalaryConfig(string level){
 
 string PedarSahab::updateSalaryConfig(string level, string newBaseSalaryStr, string newSalaryPerHourStr, string newSalaryPerExtraHourStr, string newOfficialWorkingHoursStr, string newTaxPercentageStr){
     ostringstream output;
-    int newBaseSalary = stoi(newBaseSalaryStr);
-    int newSalaryPerHour = stoi(newSalaryPerHourStr);
-    int newSalaryPerExtraHour = stoi(newSalaryPerExtraHourStr);
-    int newOfficialWorkingHours = stoi(newOfficialWorkingHoursStr);
-    int newTaxPercentage = stoi(newTaxPercentageStr);
-    if (getExpertiseToken(level) == NA){
+    int ind = getExpertiseToken(level);
+
+    if (ind == NA){
         output << "INVALID_LEVEL" << endl;
         return output.str();
     }
-    expertise[getExpertiseToken(level)].updateSalary(newBaseSalary, newSalaryPerHour, newSalaryPerExtraHour, newOfficialWorkingHours, newTaxPercentage);
+
+    if(newBaseSalaryStr != NO_UPDATE_STR){
+        expertise[ind].setBaseSalary(stoi(newBaseSalaryStr));
+    }
+    if(newSalaryPerHourStr != NO_UPDATE_STR){
+        expertise[ind].setSalaryPerHour(stoi(newSalaryPerHourStr));
+    }
+    if(newSalaryPerExtraHourStr != NO_UPDATE_STR){
+        expertise[ind].setSalaryPerExtraHour(stoi(newSalaryPerExtraHourStr));
+    }
+    if(newOfficialWorkingHoursStr != NO_UPDATE_STR){
+        expertise[ind].setOfficialWorkingHours(stoi(newOfficialWorkingHoursStr));
+    }
+    if(newTaxPercentageStr != NO_UPDATE_STR){
+        expertise[ind].setTaxPercentage(stoi(newTaxPercentageStr));
+    }
     output << "OK" << endl;
     return output.str();
 }
