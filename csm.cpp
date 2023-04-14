@@ -28,6 +28,7 @@
 #define PERCENTAGE_AMOUNT 100.0
 #define LINE_SEPERATOR "---"
 #define NA -1
+#define INF 1e9
 #define NA_STR "N/A"
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
@@ -110,6 +111,7 @@ class Employee{
         void setTeamId(int _id) { teamId = _id; };
         int getAbsentDays();
         int totalWorkingHours();
+        int hoursInDay(int day);
     private:
         int id;
         string name;
@@ -131,6 +133,14 @@ Employee::Employee(int _id, string _name, int _age, Expertise* _expertise){
         }
     }
     teamId = NA;
+}
+
+int Employee::hoursInDay(int day){
+    int hours = 0;
+    for(int i = 0; i < HOURS_IN_DAY; i++){
+        hours += isWorking[day][i];
+    }
+    return hours;
 }
 
 int Employee::totalWorkingHours(){
@@ -381,6 +391,7 @@ class PedarSahab{
         string reportSalaries();
         string reportEmployeeSalary(string idStr);
         string reportTeamSalary(string idStr);
+        string reportTotalHoursPerDay(string stDaystr, string fnDaystr);
         void freeMemory();
     private:
         vector<Employee*> employees;
@@ -388,12 +399,57 @@ class PedarSahab{
         vector<Team*> teams;
         set< pair<int, int> > teamInd;
         Expertise expertise[EXPERTISE_SIZE];
+        int workingHoursInDay(int day);
+        vector<int> maxWorkingHours(int st, int fn);
+        vector<int> minWorkingHours(int st, int fn);
 };
 
 PedarSahab::PedarSahab(){}
 
 Expertise *PedarSahab::getExpertiseByInd(int ind){
     return &(expertise[ind]);
+}
+
+int PedarSahab::workingHoursInDay(int day){
+    int sum = 0;
+    for(int i = 0; i < (int)employees.size(); i++){
+        sum += employees[i] -> hoursInDay(day);
+    }
+    return sum;
+}
+
+vector<int> PedarSahab::maxWorkingHours(int st, int fn){
+    int mx = 0;
+    vector<int> res;
+    for(int i = st; i <= fn; i++){
+        int hours = workingHoursInDay(i);
+        if(hours == mx){
+            res.push_back(i);
+        }
+        if(hours > mx){
+            res.clear();
+            res.push_back(i);
+            mx = hours;
+        }
+    }
+    return res;
+}
+
+vector<int> PedarSahab::minWorkingHours(int st, int fn){
+    int mn = INF;
+    vector<int> res;
+    for(int i = st; i <= fn; i++){
+        int hours = workingHoursInDay(i);
+        if(hours == mn){
+            res.push_back(i);
+        }
+        if(hours < mn){
+            res.clear();
+            res.push_back(i);
+            mn = hours;
+        }
+    }
+    return res;
 }
 
 void PedarSahab::addEmployee(string id, string name, string age, string expertise){
@@ -478,6 +534,33 @@ string PedarSahab::reportTeamSalary(string idStr){
         return output.str();
     }
     output << teamPtr -> getInfo();
+    return output.str();
+}
+
+string PedarSahab::reportTotalHoursPerDay(string stDaystr, string fnDaystr){
+    ostringstream output;
+    int stDay = stoi(stDaystr) - 1;
+    int fnDay = stoi(fnDaystr) - 1;
+    if(stDay < 0 || stDay >= DAYS_IN_MONTH || fnDay < 0 || fnDay >= DAYS_IN_MONTH || fnDay < stDay){
+        output << "INVALID_ARGUMENTS" << endl;
+        return output.str();
+    }
+    for(int i = stDay; i <= fnDay; i++){
+        output << "Day #" << (i + 1) << ": " << workingHoursInDay(i) << endl;
+    }
+    output << LINE_SEPERATOR << endl;
+    output << "Day(s) with Max Workin Hours: " ;
+    vector<int> mx = maxWorkingHours(stDay, fnDay);
+    for(int i = 0; i < (int)mx.size(); i++){
+        output << mx[i] + 1 << " ";
+    }
+    output << endl;
+    output << "Day(s) with Min Workin Hours: " ;
+    vector<int> mn = minWorkingHours(stDay, fnDay);
+    for(int i = 0; i < (int)mn.size(); i++){
+        output << mn[i] + 1 << " ";
+    }
+    output << endl;
     return output.str();
 }
 
@@ -642,6 +725,9 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
     }
     if(cmdInd == REPORT_TEAM_SALARY){
         cout << pedarSahab.reportTeamSalary(cmdWords[1]);
+    }
+    if(cmdInd == REPORT_TOTAL_HOURS_PER_DAY){
+        cout << pedarSahab.reportTotalHoursPerDay(cmdWords[1], cmdWords[2]);
     }
     cout << "IND: " << cmdInd << endl;
 }
