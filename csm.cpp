@@ -30,6 +30,8 @@
 #define NA -1
 #define INF 1e9
 #define NA_STR "N/A"
+#define OK "OK"
+#define ERROR "ERROR"
 
 enum FILE_NAME {SALARY_CONFIG_FILE, EMPLOYEE_FILE, TEAMS_FILE, WORKING_HOURS_FILE};
 enum LEVEL {JUNIOR, EXPERT, SENIOR, TEAMLEAD};
@@ -141,7 +143,8 @@ class Employee{
         int totalWorkingHours();
         int hoursInDay(int day);
         int getCountPresentInHour(int hour);
-
+        string addWorkHours(int day, int stHour, int endHour);
+        void deleteWorkDay(int day);
     private:
         int id;
         string name;
@@ -263,6 +266,21 @@ string Employee::outputAsTeamMember(){
     return output.str();
 }
 
+string Employee::addWorkHours(int day, int stHour, int endHour){
+    for (int i = stHour; i <= endHour; ++i){
+        if (isWorking[day][i])
+            return ERROR;
+    }
+    for (int i = stHour; i <= endHour; ++i)
+        isWorking[day][i] = true;
+    return OK;
+}
+
+void Employee::deleteWorkDay(int day){
+    for (int i = 0; i < HOURS_IN_DAY; ++i)
+        isWorking[day][i] = false;
+}
+
 Employee* findEmployeeById(int id, const vector<Employee*> &employees, const set< pair<int, int> > &employeeInd){
     set< pair<int, int> >::iterator indPair = lower_bound(all(employeeInd), make_pair(id, 0));
     if(indPair == employeeInd.end()){
@@ -277,8 +295,11 @@ Employee* findEmployeeById(int id, const vector<Employee*> &employees, const set
 class Team{
     public:
         Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance);
+        int getId();
         void outputTeam();
         string getInfo();
+        void updateBonusPercentage(int newBonusPercentage);
+        bool isGoodForBonus();
     private:
         int id;
         Employee* head;
@@ -302,6 +323,10 @@ Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWo
     bonusMinWorkingHours = _bonusMinWorkingHours;
     bonusWorkingHoursMaxVariance = _bonusWorkingHoursMaxVariance;
     bonus = 0;
+}
+
+int Team::getId(){
+    return id;
 }
 
 void Team::outputTeam(){
@@ -342,6 +367,30 @@ string Team::getInfo(){
         output << members[i -> second] -> outputAsTeamMember() << LINE_SEPERATOR << endl;
     }
     return output.str();
+}
+
+void Team::updateBonusPercentage(int newBonusPercentage){
+    bonus = newBonusPercentage;
+}
+
+bool Team::isGoodForBonus(){
+    vector <int> workHours;
+    int memCount = (int)members.size();
+    for (Employee* emp : members){
+        workHours.push_back(emp -> totalWorkingHours());
+    }
+    int totalHours = 0;
+    for (int i : workHours)
+        totalHours += i;
+    double avg = totalHours/memCount;
+
+    double variance = 0;
+    for (int i : workHours)
+        variance += (i-avg)*(i-avg);
+    
+    if (totalHours >= bonusMinWorkingHours && variance <= bonusMinWorkingHours)
+        return true;
+    return false;
 }
 
 int getExpertiseToken(string tokenStr){
@@ -432,6 +481,10 @@ class PedarSahab{
         string reportEmployeePerHour(string stHour, string endHour);
         string showSalaryConfig(string level);
         string updateSalaryConfig(string level, string newBaseSalaryStr, string newSalaryPerHourStr, string newSalaryPerExtraHourStr, string newOfficialWorkingHoursStr, string newTaxPercentageStr);
+        string addWorkingHours(string idStr, string dayStr, string stHourStr, string endHourStr);
+        string deleteWorkingHours(string idStr, string dayStr);
+        string updateTeamBonus(string teamIdStr, string newBonusPercentageStr);
+        string findTeamsForBonus();
         void freeMemory();
     private:
         vector<Employee*> employees;
@@ -700,6 +753,75 @@ string PedarSahab::updateSalaryConfig(string level, string newBaseSalaryStr, str
     return output.str();
 }
 
+string PedarSahab::addWorkingHours(string idStr, string dayStr, string stHourStr, string endHourStr){
+    ostringstream output;
+    int id = stoi(idStr);
+    int day = stoi(dayStr) - 1;
+    int stHour = stoi(stHourStr);
+    int endHour = stoi(endHourStr)-1;
+    Employee* emp = findEmployeeById(id, employees, employeeInd);
+    if(emp == NULL){
+        output << "EMPLOYEE_NOT_FOUND" << endl;
+        return output.str();
+    }
+    if(stHour < 0 || endHour >= HOURS_IN_DAY || stHour > endHour || day < 0 || day >= DAYS_IN_MONTH){
+        output << "INVALID_ARGUEMENTS" << endl;
+        return output.str();
+    }
+    if (emp->addWorkHours(day, stHour, endHour) == ERROR){
+        output << "INVALID_INTERVAL" << endl;
+        return output.str();
+    }
+    output << "OK" << endl;
+    return output.str();
+}
+
+string PedarSahab::deleteWorkingHours(string idStr, string dayStr){
+    ostringstream output;
+    int id = stoi(idStr);
+    int day = stoi(dayStr) - 1;
+    Employee* emp = findEmployeeById(id, employees, employeeInd);
+    if(emp == NULL){
+        output << "EMPLOYEE_NOT_FOUND" << endl;
+        return output.str();
+    }
+    if(day < 0 || day >= DAYS_IN_MONTH){
+        output << "INVALID_ARGUEMENTS" << endl;
+        return output.str();
+    }
+    emp -> deleteWorkDay(day);
+    output << "OK" << endl;
+    return output.str();
+}
+
+string PedarSahab::updateTeamBonus(string teamIdStr, string newBonusPercentageStr){
+    ostringstream output;
+    int teamId = stoi(teamIdStr);
+    int newBonusPercentage = stoi(newBonusPercentageStr);
+    Team* teamPtr = findTeamById(stoi(teamIdStr));
+    if(teamPtr == NULL){
+        output << "TEAM_NOT_FOUND" << endl;
+        return output.str();
+    }
+    if(newBonusPercentage < 0 || newBonusPercentage > 100){
+        output << "INVALID_ARGUEMENTS" << endl;
+        return output.str();
+    }
+    teamPtr -> updateBonusPercentage(newBonusPercentage);
+    output << "OK" << endl;
+    return output.str();
+}
+
+string PedarSahab::findTeamsForBonus(){
+    ostringstream output;
+    for (Team* team : teams){
+        if (team -> isGoodForBonus()){
+            output << "Team ID: " << team -> getId() << endl;
+        }
+    }
+    return output.str();
+}
+
 void PedarSahab::freeMemory(){
     for(int i = 0; i < (int)employees.size(); i++){
         delete employees[i];
@@ -874,7 +996,18 @@ void handleCommand(string cmdLine, PedarSahab &pedarSahab){
     if (cmdInd == UPDATE_SALARY_CONFIG){
         cout << pedarSahab.updateSalaryConfig(cmdWords[1], cmdWords[2], cmdWords[3], cmdWords[4], cmdWords[5], cmdWords[6]);
     }
-    cout << "IND: " << cmdInd << endl;
+    if (cmdInd == ADD_WORKING_HOURS){
+        cout << pedarSahab.addWorkingHours(cmdWords[1], cmdWords[2], cmdWords[3], cmdWords[4]);
+    }
+    if (cmdInd == DELETE_WORKING_HOURS){
+        cout << pedarSahab.deleteWorkingHours(cmdWords[1], cmdWords[2]);
+    }
+    if (cmdInd == UPDATE_TEAM_BONUS){
+        cout << pedarSahab.updateTeamBonus();
+    }
+    if (cmdInd == FIND_TEAMS_FOR_BONUS){
+        cout << pedarSahab.findTeamsForBonus();
+    }
 }
 
 int main(int argc, char *argv[]) {
