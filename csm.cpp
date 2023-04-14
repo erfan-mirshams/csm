@@ -842,9 +842,9 @@ string PedarSahab::updateTeamBonus(string teamIdStr, string newBonusPercentageSt
 
 string PedarSahab::findTeamsForBonus(){
     ostringstream output;
-    for (Team* team : teams){
-        if (team -> isGoodForBonus()){
-            output << "Team ID: " << team -> getId() << endl;
+    for (int i = 0; i < (int)teams.size(); i++){
+        if (teams[i] -> isGoodForBonus()){
+            output << "Team ID: " << teams[i] -> getId() << endl;
         }
     }
     return output.str();
