@@ -995,6 +995,9 @@ void readInput(string assetsFolder, PedarSahab &pedarSahab){
 
 void handleCommand(string cmdLine, PedarSahab &pedarSahab){
     vector<string> cmdWords = splitIntoWords(cmdLine);
+    if(cmdWords.empty()){
+        return;
+    }
     int cmdInd = CMD_SIZE;
     for(int i = 0; i < CMD_SIZE; i++){
         if(cmdWords[0] == CMD_NAMES[i]){
