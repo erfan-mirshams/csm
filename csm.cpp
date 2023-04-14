@@ -729,7 +729,7 @@ string PedarSahab::reportEmployeePerHour(string stHourStr, string endHourStr){
     int stHour = stoi(stHourStr);
     int endHour = stoi(endHourStr) - 1;
     if (stHour < 0 || endHour >= HOURS_IN_DAY || stHour > endHour){
-        output << "INVALID_ARGUEMENTS" << endl;
+        output << "INVALID_ARGUMENTS" << endl;
         return output.str();
     }
 
@@ -801,7 +801,7 @@ string PedarSahab::addWorkingHours(string idStr, string dayStr, string stHourStr
         return output.str();
     }
     if(stHour < 0 || endHour >= HOURS_IN_DAY || stHour > endHour || day < 0 || day >= DAYS_IN_MONTH){
-        output << "INVALID_ARGUEMENTS" << endl;
+        output << "INVALID_ARGUMENTS" << endl;
         return output.str();
     }
     if (emp->addWorkHours(day, stHour, endHour) == ERROR){
@@ -822,7 +822,7 @@ string PedarSahab::deleteWorkingHours(string idStr, string dayStr){
         return output.str();
     }
     if(day < 0 || day >= DAYS_IN_MONTH){
-        output << "INVALID_ARGUEMENTS" << endl;
+        output << "INVALID_ARGUMENTS" << endl;
         return output.str();
     }
     emp -> deleteWorkDay(day);
@@ -840,7 +840,7 @@ string PedarSahab::updateTeamBonus(string teamIdStr, string newBonusPercentageSt
         return output.str();
     }
     if(newBonusPercentage < 0 || newBonusPercentage > PERCENTAGE_AMOUNT){
-        output << "INVALID_ARGUEMENTS" << endl;
+        output << "INVALID_ARGUMENTS" << endl;
         return output.str();
     }
     teamPtr -> updateBonusPercentage(newBonusPercentage);
@@ -850,10 +850,15 @@ string PedarSahab::updateTeamBonus(string teamIdStr, string newBonusPercentageSt
 
 string PedarSahab::findTeamsForBonus(){
     ostringstream output;
+    int teamCount = 0;
     for (int i = 0; i < (int)teams.size(); i++){
         if (teams[i] -> isGoodForBonus()){
             output << "Team ID: " << teams[i] -> getId() << endl;
+            teamCount++;
         }
+    }
+    if(!teamCount){
+        output << "NO_BONUS_TEAMS" << endl;
     }
     return output.str();
 }
