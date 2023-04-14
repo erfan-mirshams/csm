@@ -586,9 +586,9 @@ int PedarSahab::getCountWorkingInHour(int hour){
 
 vector <int> PedarSahab::getMaxWorkingHoursInMonth(int stHour, int endHour){
     vector <int> res;
-    int mx = 0;
+    double mx = 0;
     for (int i = stHour; i <= endHour; ++i){
-        int count = getCountWorkingInHour(i);
+        double count = roundOneDigit((double)getCountWorkingInHour(i) / (int)employees.size());
         if (count == mx)
             res.push_back(i);
         if (count > mx){
@@ -602,9 +602,9 @@ vector <int> PedarSahab::getMaxWorkingHoursInMonth(int stHour, int endHour){
 
 vector <int> PedarSahab::getMinWorkingHoursInMonth(int stHour, int endHour){
     vector <int> res;
-    int mn = INF;
+    double mn = INF;
     for (int i = stHour; i <= endHour; ++i){
-        int count = getCountWorkingInHour(i);
+        double count = roundOneDigit((double)getCountWorkingInHour(i) / (int)employees.size());
         if (count == mn)
             res.push_back(i);
         if (count < mn){
