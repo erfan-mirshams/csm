@@ -62,7 +62,6 @@ class Expertise{
         string getLevelName() { return LEVEL_NAMES[level]; };
         int calculateTax(int salaryBonus);
         int calculateEarning(int salaryBonus);
-        void outputExpertise();
         int calculateSalary(int hours);
         string showConfig();
         void setBaseSalary(int _baseSalary) { baseSalary = _baseSalary; };
@@ -116,19 +115,12 @@ string Expertise::showConfig(){
     return output.str();
 }
 
-void Expertise::outputExpertise(){
-    cout << LEVEL_NAMES[level] << endl;
-    cout << "Base salary: " << baseSalary << " Salary per hour: " << salaryPerHour << " Salary per extra hour: "
-         << salaryPerExtraHour << " Official working hours: " << officialWorkingHours << " tax: " << taxPercentage << endl;
-}
-
 class Employee{
     public:
         Employee(int _id, string _name, int _age, Expertise* _expertise);
         int getId() { return id; }
         void updateWorkingHours(int day, int intervalStart, int intervalFinish);
         void updateTeamBonusPercentage(int newTeamBonusPercentage);
-        void outputEmployee();
         int getTotalEarning();
         string getBriefInfo();
         string getTeamIdStr();
@@ -237,10 +229,6 @@ void Employee::updateWorkingHours(int day, int intervalStart, int intervalFinish
     }
 }
 
-void Employee::outputEmployee(){
-    cout << "Id and name: " << id << ' ' << name << " Age: " << age << " Expertise: " << expertise->getLevelName() << endl;
-}
-
 string Employee::getBriefInfo(){
     ostringstream output;
     output << "ID: " << id << endl;
@@ -318,7 +306,6 @@ class Team{
     public:
         Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWorkingHours, double _bonusWorkingHoursMaxVariance);
         int getId();
-        void outputTeam();
         string getInfo();
         void updateBonusPercentage(int newBonusPercentage);
         bool isGoodForBonus();
@@ -349,15 +336,6 @@ Team::Team(int _id, Employee* _head, vector<Employee*> _members, int _bonusMinWo
 
 int Team::getId(){
     return id;
-}
-
-void Team::outputTeam(){
-    cout << "Team id: " << id << "Head id: " << head -> getId() << endl;
-    cout << "And there are " << (int)members.size() << " members which are:" << endl;
-    for (auto member : members)
-        cout << member -> getId() << ' ';
-    cout << "Minimum working hours for getting bonus and variance thing: " << bonusMinWorkingHours << ' ' <<
-        bonusWorkingHoursMaxVariance << endl;
 }
 
 int Team::workingHourSum(){
@@ -497,7 +475,6 @@ class PedarSahab{
         void updateExpertise(string level, string baseSalary, string salaryPerHour, string salaryPerExtraHour, string officialWorkingHours, string taxPercentage);
         void addTeam(string teamId, string teamHeadId, string memberIds, string bonusMinWorkingHours, string bonusWorkingHoursMaxVariance);
         void updateEmployeeWorkingDay(string id, string day, string workInterval);
-        void outputPedarSahab();
         Team* findTeamById(int id);
         string reportSalaries();
         string reportEmployeeSalary(string idStr);
@@ -638,23 +615,6 @@ void PedarSahab::updateEmployeeWorkingDay(string id, string day, string workInte
     Employee* employee = findEmployeeById(stoi(id), employees, employeeInd);
     vector<string> intervalStr = splitString(workInterval, WORK_INTERVAL_DELIM);
     employee -> updateWorkingHours(stoi(day) - 1, stoi(intervalStr[0]), stoi(intervalStr[1]));
-}
-
-void PedarSahab::outputPedarSahab(){
-    cout << "Epertise: " << endl;
-    for (int i = 0; i < EXPERTISE_SIZE; ++i)
-        expertise[i].outputExpertise();
-    cout << endl;
-    
-    cout << "Employees: " << endl;
-    for (int i = 0; i < (int)employees.size(); ++i)
-        employees[i] -> outputEmployee();
-    cout << endl;
-    
-    cout << "Teams: " << endl;
-    for (int i = 0; i < (int)teams.size(); ++i)
-        teams[i] -> outputTeam();
-    cout << endl;
 }
 
 Team* PedarSahab::findTeamById(int id){
@@ -1065,7 +1025,6 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
 
-    //pedarSahab.outputPedarSahab();
     string cmdLine;
 
     while(getline(cin, cmdLine)){
