@@ -562,7 +562,7 @@ vector <int> PedarSahab::getMaxWorkingHoursInMonth(int stHour, int endHour){
     vector <int> res;
     double mx = 0;
     for (int i = stHour; i <= endHour; ++i){
-        double count = roundOneDigit((double)getCountWorkingInHour(i) / (int)employees.size());
+        double count = roundOneDigit((double)getCountWorkingInHour(i) / DAYS_IN_MONTH);
         if (count == mx)
             res.push_back(i);
         if (count > mx){
@@ -578,7 +578,7 @@ vector <int> PedarSahab::getMinWorkingHoursInMonth(int stHour, int endHour){
     vector <int> res;
     double mn = INF;
     for (int i = stHour; i <= endHour; ++i){
-        double count = roundOneDigit((double)getCountWorkingInHour(i) / (int)employees.size());
+        double count = roundOneDigit((double)getCountWorkingInHour(i) / DAYS_IN_MONTH);
         if (count == mn)
             res.push_back(i);
         if (count < mn){
@@ -695,7 +695,7 @@ string PedarSahab::reportEmployeePerHour(string stHourStr, string endHourStr){
     }
 
     for (int hour = stHour; hour <= endHour; ++hour)
-        output << hour << "-" << hour+1 << ": " << fixed << setprecision(1) << roundOneDigit((double)getCountWorkingInHour(hour)/(int)employees.size()) << endl;
+        output << hour << "-" << hour+1 << ": " << fixed << setprecision(1) << roundOneDigit((double)getCountWorkingInHour(hour)/DAYS_IN_MONTH) << endl;
     
     output << LINE_SEPERATOR << endl;
 
