@@ -349,9 +349,7 @@ int Team::workingHourSum(){
 double Team::workingHourAverage(){
     double avg = workingHourSum();
     avg /= (int)members.size();
-    avg *= 10;
-    avg = round(avg);
-    avg /= 10;
+    avg = roundOneDigit(avg);
     return avg;
 }
 
