@@ -8,6 +8,7 @@
 #include <cctype>
 #include <utility>
 #include <cmath>
+#include <iomanip>
 
 #define all(x) x.begin(), x.end()
 
@@ -381,7 +382,7 @@ string Team::getInfo(){
     output << "ID: " << id << endl;
     output << head -> outputAsTeamHead();
     output << "Team Total Working Hours: " << workingHourSum() << endl;
-    output << "Average Member Working Hours: " << workingHourAverage() << endl;
+    output << "Average Member Working Hours: " << fixed << setprecision(1) << workingHourAverage() << endl;
     output << "Bonus: " << bonus << endl;
     output << LINE_SEPERATOR << endl;
     for(set< pair<int, int> >::iterator i = memberInd.begin(); i != memberInd.end(); ++i){
@@ -709,13 +710,13 @@ string PedarSahab::reportTotalHoursPerDay(string stDaystr, string fnDaystr){
         output << "Day #" << (i + 1) << ": " << workingHoursInDay(i) << endl;
     }
     output << LINE_SEPERATOR << endl;
-    output << "Day(s) with Max Workin Hours: " ;
+    output << "Day(s) with Max Working Hours: " ;
     vector<int> mx = maxWorkingHours(stDay, fnDay);
     for(int i = 0; i < (int)mx.size(); i++){
         output << mx[i] + 1 << " ";
     }
     output << endl;
-    output << "Day(s) with Min Workin Hours: " ;
+    output << "Day(s) with Min Working Hours: " ;
     vector<int> mn = minWorkingHours(stDay, fnDay);
     for(int i = 0; i < (int)mn.size(); i++){
         output << mn[i] + 1 << " ";
@@ -734,7 +735,7 @@ string PedarSahab::reportEmployeePerHour(string stHourStr, string endHourStr){
     }
 
     for (int hour = stHour; hour <= endHour; ++hour)
-        output << hour << "-" << hour+1 << ": " << roundOneDigit((double)getCountWorkingInHour(hour)/(int)employees.size()) << endl;
+        output << hour << "-" << hour+1 << ": " << fixed << setprecision(1) << roundOneDigit((double)getCountWorkingInHour(hour)/(int)employees.size()) << endl;
     
     output << LINE_SEPERATOR << endl;
 
